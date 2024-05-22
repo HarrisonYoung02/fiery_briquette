@@ -4,38 +4,33 @@ import {
   StyleSheet,
   Pressable,
   TextInput,
-  Keyboard,
-  TouchableWithoutFeedback,
   Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useState, useRef, useEffect } from "react";
-
-const DismissKeyboard = ({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.ReactNode => (
-  <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-    {children}
-  </TouchableWithoutFeedback>
-);
+import DismissKeyboard from "@/components/DismissKeyboard";
+import AnimatedTempDial from "@/components/AnimatedTempDial";
 
 const filterNumInput = (numStr: string): string =>
   numStr.toString().replace(/[^0-9]/g, "");
 
-const disconnect = () => {}; // TODO: replace/update when bluetooth added
-
 export default function Index(): React.ReactNode {
-  const LOW_TEMP_STR_DEFAULT = "Set Low";
-  const HIGH_TEMP_STR_DEFAULT = "Set High";
-  const LOW_TEMP_DEFAULT = 100; // Temps in F
-  const HIGH_TEMP_DEFAULT = 300;
-
   const router = useRouter();
   const [connected, setConnected] = useState<boolean>(false);
   const [deviceName, setDeviceName] = useState<string>("");
-  const [currentTempStr, setCurrentTempStr] = useState<string>("Not Connected");
+
+  const LOW_TEMP_STR_DEFAULT = "Set Low";
+  const HIGH_TEMP_STR_DEFAULT = "Set High";
+  const LOW_TEMP_DEFAULT = 40; // Defaults in Celsius
+  const HIGH_TEMP_DEFAULT = 150;
+  const [isCelsius, setIsCelsius] = useState<boolean>(false);
+  const [currentTemp, setCurrentTemp] = useState<number>(0);
+  const [lowTemp, setLowTemp] = useState<number>(
+    isCelsius ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32
+  );
+  const [highTemp, setHighTemp] = useState<number>(
+    isCelsius ? HIGH_TEMP_DEFAULT : HIGH_TEMP_DEFAULT * (9 / 5) + 32
+  );
   const [lowTempStr, setLowTempStr] = useState<string>(LOW_TEMP_STR_DEFAULT);
   const [highTempStr, setHighTempStr] = useState<string>(HIGH_TEMP_STR_DEFAULT);
 
@@ -44,37 +39,47 @@ export default function Index(): React.ReactNode {
 
   const increment = () => {
     if (connected) {
-      if (currentTempStr === "Not Connected") setCurrentTempStr("200");
-      else {
-        let temp = Number(currentTempStr);
-        if (countUp) temp += 10;
-        else temp -= 10;
-        setCurrentTempStr(temp.toString());
-        const lowTemp =
-          lowTempStr === LOW_TEMP_STR_DEFAULT
-            ? LOW_TEMP_DEFAULT
-            : Number(lowTempStr);
-        const highTemp =
-          highTempStr === HIGH_TEMP_STR_DEFAULT
-            ? HIGH_TEMP_DEFAULT
-            : Number(highTempStr);
-        console.log(`Current: ${temp}, Low: ${lowTemp}, High: ${highTemp}`);
-        if (temp <= lowTemp || temp >= highTemp) {
-          setCountUp(!countUp);
-        }
-      }
+      let temp = currentTemp;
+      if (countUp) temp += 10;
+      else temp -= 10;
+      setCurrentTemp(temp);
+      if (temp <= lowTemp - 50) setCountUp(true);
+      else if (temp >= highTemp + 50) setCountUp(false);
     }
   };
   useEffect(() => {
     if (timer.current) clearInterval(timer.current);
     timer.current = setInterval(increment, 1000);
-  }, [connected, currentTempStr, lowTempStr, highTempStr, countUp]);
+  }, [connected, currentTemp, lowTemp, highTemp, countUp]);
+
+  // TODO: replace/update when bluetooth added
+  const connect = (): void => {
+    router.navigate("/bluetooth");
+    setConnected(true);
+    setDeviceName("Example device");
+    setCurrentTemp(200);
+  };
+  const disconnect = (): void => {
+    setConnected(false);
+    setDeviceName("");
+  };
+
+  const getCurrentTempStr = (): string => {
+    if (!connected) return "Not Connected";
+    if (isCelsius) return `${currentTemp}\u00b0C`;
+    return `${currentTemp}\u00b0F`;
+  };
 
   return (
     <DismissKeyboard>
       <View style={styles.container}>
         <View style={styles.body}>
-          <Text style={styles.temperature}>{currentTempStr}</Text>
+          <AnimatedTempDial
+            lowTemp={lowTemp}
+            highTemp={highTemp}
+            currentTemp={currentTemp}
+          />
+          <Text style={styles.temperature}>{getCurrentTempStr()}</Text>
           <View style={styles.tempFlagInputHolderRow}>
             <View style={styles.tempFlagInputHolderCol}>
               <TextInput
@@ -86,12 +91,35 @@ export default function Index(): React.ReactNode {
                     setLowTempStr("");
                   }
                 }}
-                onChangeText={(text) => setLowTempStr(filterNumInput(text))}
+                onChangeText={(text) => {
+                  const temp = filterNumInput(text);
+                  setLowTempStr(temp);
+                }}
                 onEndEditing={() => {
                   if (lowTempStr === "") setLowTempStr(LOW_TEMP_STR_DEFAULT);
+                  else {
+                    setLowTemp(Number(lowTempStr));
+                    if (Number(lowTempStr) >= highTemp) {
+                      setHighTempStr(`${Number(lowTempStr) + 1}`);
+                      setHighTemp(Number(lowTempStr) + 1);
+                    }
+                  }
                 }}
               ></TextInput>
-              <Pressable onPress={() => setLowTempStr(LOW_TEMP_STR_DEFAULT)}>
+              <Pressable
+                onPress={() => {
+                  const lowDefault = isCelsius
+                    ? LOW_TEMP_DEFAULT
+                    : LOW_TEMP_DEFAULT * (9 / 5) + 32;
+
+                  if (lowDefault >= highTemp) {
+                    setHighTempStr(`${lowDefault + 1}`);
+                    setHighTemp(lowDefault + 1);
+                  }
+                  setLowTempStr(LOW_TEMP_STR_DEFAULT);
+                  setLowTemp(lowDefault);
+                }}
+              >
                 <Image
                   style={[
                     styles.tempFlagInputReset,
@@ -99,7 +127,7 @@ export default function Index(): React.ReactNode {
                       ? styles.hidden
                       : null,
                   ]}
-                  source={require("../assets/images/reset-low.png")}
+                  source={require("@/assets/images/reset-low.png")}
                 />
               </Pressable>
             </View>
@@ -113,12 +141,35 @@ export default function Index(): React.ReactNode {
                     setHighTempStr("");
                   }
                 }}
-                onChangeText={(text) => setHighTempStr(filterNumInput(text))}
+                onChangeText={(text) => {
+                  const temp = filterNumInput(text);
+                  setHighTempStr(temp);
+                }}
                 onEndEditing={() => {
                   if (highTempStr === "") setHighTempStr(HIGH_TEMP_STR_DEFAULT);
+                  else {
+                    setHighTemp(Number(highTempStr));
+                    if (Number(highTempStr) <= lowTemp) {
+                      setLowTempStr(`${Number(highTempStr) - 1}`);
+                      setLowTemp(Number(highTempStr) - 1);
+                    }
+                  }
                 }}
               ></TextInput>
-              <Pressable onPress={() => setHighTempStr(HIGH_TEMP_STR_DEFAULT)}>
+              <Pressable
+                onPress={() => {
+                  const highDefault = isCelsius
+                    ? HIGH_TEMP_DEFAULT
+                    : HIGH_TEMP_DEFAULT * (9 / 5) + 32;
+
+                  if (highDefault <= lowTemp) {
+                    setLowTempStr(`${highDefault - 1}`);
+                    setLowTemp(highDefault - 1);
+                  }
+                  setHighTempStr(HIGH_TEMP_STR_DEFAULT);
+                  setHighTemp(highDefault);
+                }}
+              >
                 <Image
                   style={[
                     styles.tempFlagInputReset,
@@ -149,8 +200,7 @@ export default function Index(): React.ReactNode {
             ]}
             onPress={() => {
               if (connected) disconnect();
-              else router.navigate("/bluetooth");
-              setConnected(!connected); // TODO: remove when bluetooth added
+              else connect();
             }}
           >
             <Text style={styles.bluetoothButtonText}>
@@ -179,6 +229,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   temperature: {
+    top: -50,
     fontSize: 50,
     textAlign: "center",
   },
