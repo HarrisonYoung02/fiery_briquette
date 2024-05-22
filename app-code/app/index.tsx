@@ -6,6 +6,7 @@ import {
   TextInput,
   Keyboard,
   TouchableWithoutFeedback,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useState, useRef, useEffect } from "react";
@@ -74,35 +75,61 @@ export default function Index(): React.ReactNode {
       <View style={styles.container}>
         <View style={styles.body}>
           <Text style={styles.temperature}>{currentTempStr}</Text>
-          <View style={styles.tempFlagInputHolder}>
-            <TextInput
-              style={[styles.tempFlagInput, styles.tempFlagInputLow]}
-              keyboardType="numeric"
-              value={lowTempStr}
-              onFocus={() => {
-                if (lowTempStr === LOW_TEMP_STR_DEFAULT) {
-                  setLowTempStr("");
-                }
-              }}
-              onChangeText={(text) => setLowTempStr(filterNumInput(text))}
-              onEndEditing={() => {
-                if (lowTempStr === "") setLowTempStr(LOW_TEMP_STR_DEFAULT);
-              }}
-            ></TextInput>
-            <TextInput
-              style={[styles.tempFlagInput, styles.tempFlagInputHigh]}
-              keyboardType="numeric"
-              value={highTempStr}
-              onFocus={() => {
-                if (highTempStr === HIGH_TEMP_STR_DEFAULT) {
-                  setHighTempStr("");
-                }
-              }}
-              onChangeText={(text) => setHighTempStr(filterNumInput(text))}
-              onEndEditing={() => {
-                if (highTempStr === "") setHighTempStr(HIGH_TEMP_STR_DEFAULT);
-              }}
-            ></TextInput>
+          <View style={styles.tempFlagInputHolderRow}>
+            <View style={styles.tempFlagInputHolderCol}>
+              <TextInput
+                style={[styles.tempFlagInput, styles.tempFlagInputLow]}
+                keyboardType="numeric"
+                value={lowTempStr}
+                onFocus={() => {
+                  if (lowTempStr === LOW_TEMP_STR_DEFAULT) {
+                    setLowTempStr("");
+                  }
+                }}
+                onChangeText={(text) => setLowTempStr(filterNumInput(text))}
+                onEndEditing={() => {
+                  if (lowTempStr === "") setLowTempStr(LOW_TEMP_STR_DEFAULT);
+                }}
+              ></TextInput>
+              <Pressable onPress={() => setLowTempStr(LOW_TEMP_STR_DEFAULT)}>
+                <Image
+                  style={[
+                    styles.tempFlagInputReset,
+                    lowTempStr === LOW_TEMP_STR_DEFAULT || lowTempStr === ""
+                      ? styles.hidden
+                      : null,
+                  ]}
+                  source={require("../assets/images/reset-low.png")}
+                />
+              </Pressable>
+            </View>
+            <View style={styles.tempFlagInputHolderCol}>
+              <TextInput
+                style={[styles.tempFlagInput, styles.tempFlagInputHigh]}
+                keyboardType="numeric"
+                value={highTempStr}
+                onFocus={() => {
+                  if (highTempStr === HIGH_TEMP_STR_DEFAULT) {
+                    setHighTempStr("");
+                  }
+                }}
+                onChangeText={(text) => setHighTempStr(filterNumInput(text))}
+                onEndEditing={() => {
+                  if (highTempStr === "") setHighTempStr(HIGH_TEMP_STR_DEFAULT);
+                }}
+              ></TextInput>
+              <Pressable onPress={() => setHighTempStr(HIGH_TEMP_STR_DEFAULT)}>
+                <Image
+                  style={[
+                    styles.tempFlagInputReset,
+                    highTempStr === HIGH_TEMP_STR_DEFAULT || highTempStr === ""
+                      ? styles.hidden
+                      : null,
+                  ]}
+                  source={require("../assets/images/reset-high.png")}
+                />
+              </Pressable>
+            </View>
           </View>
         </View>
         <View style={styles.footer}>
@@ -137,6 +164,7 @@ export default function Index(): React.ReactNode {
 }
 
 const styles = StyleSheet.create({
+  hidden: { opacity: 0 },
   container: {
     flex: 1,
   },
@@ -154,9 +182,13 @@ const styles = StyleSheet.create({
     fontSize: 50,
     textAlign: "center",
   },
-  tempFlagInputHolder: {
+  tempFlagInputHolderRow: {
     flexDirection: "row",
     justifyContent: "space-evenly",
+  },
+  tempFlagInputHolderCol: {
+    flexDirection: "column",
+    alignItems: "center",
   },
   tempFlagInput: {
     textAlign: "center",
@@ -173,6 +205,12 @@ const styles = StyleSheet.create({
   bluetoothLabel: {
     flexDirection: "column",
     margin: 10,
+  },
+  tempFlagInputReset: {
+    width: 25,
+    height: 25,
+    margin: 10,
+    resizeMode: "contain",
   },
   bluetoothLabelLine: {
     fontSize: 20,
