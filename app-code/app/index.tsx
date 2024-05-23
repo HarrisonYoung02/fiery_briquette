@@ -10,14 +10,24 @@ import { useRouter } from "expo-router";
 import { useState, useRef, useEffect } from "react";
 import DismissKeyboard from "@/components/DismissKeyboard";
 import AnimatedTempDial from "@/components/AnimatedTempDial";
+import DeviceModal from "@/components/DeviceConnectionModal";
+import useBLE from "@/useBLE";
 
 const filterNumInput = (numStr: string): string =>
   numStr.toString().replace(/[^0-9]/g, "");
 
 export default function Index(): React.ReactNode {
-  const router = useRouter();
+  const {
+    requestPermissions,
+    scanForPeripherals,
+    allDevices,
+    connectToDevice,
+    connectedDevice,
+    temperature,
+    disconnectFromDevice,
+  } = useBLE();
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [connected, setConnected] = useState<boolean>(false);
-  const [deviceName, setDeviceName] = useState<string>("");
 
   const LOW_TEMP_STR_DEFAULT = "Set Low";
   const HIGH_TEMP_STR_DEFAULT = "Set High";
@@ -37,6 +47,22 @@ export default function Index(): React.ReactNode {
   const [countUp, setCountUp] = useState<boolean>(true);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const scanForDevices = async () => {
+    const isPermissionsEnabled = await requestPermissions();
+    if (isPermissionsEnabled) {
+      scanForPeripherals();
+    }
+  };
+
+  const hideModal = () => {
+    setIsModalVisible(false);
+  };
+
+  const openModal = async () => {
+    scanForDevices();
+    setIsModalVisible(true);
+  };
+
   const increment = () => {
     if (connected) {
       let temp = currentTemp;
@@ -54,14 +80,13 @@ export default function Index(): React.ReactNode {
 
   // TODO: replace/update when bluetooth added
   const connect = (): void => {
-    router.navigate("/bluetooth");
+    openModal();
     setConnected(true);
-    setDeviceName("Example device");
-    setCurrentTemp(200);
   };
+
   const disconnect = (): void => {
     setConnected(false);
-    setDeviceName("");
+    disconnectFromDevice();
   };
 
   const getCurrentTempStr = (): string => {
@@ -188,7 +213,9 @@ export default function Index(): React.ReactNode {
             <Text style={styles.bluetoothLabelLine}>Bluetooth</Text>
             <Text style={styles.bluetoothLabelLine}>
               Connected to:{" "}
-              <Text style={styles.bluetoothLabelDevice}>{deviceName}</Text>
+              <Text style={styles.bluetoothLabelDevice}>
+                {connectedDevice ? connectedDevice.name : " "}
+              </Text>
             </Text>
           </View>
           <Pressable
@@ -208,6 +235,12 @@ export default function Index(): React.ReactNode {
             </Text>
           </Pressable>
         </View>
+        <DeviceModal
+          closeModal={hideModal}
+          visible={isModalVisible}
+          connectToPeripheral={connectToDevice}
+          devices={allDevices}
+        />
       </View>
     </DismissKeyboard>
   );
