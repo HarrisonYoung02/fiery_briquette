@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import { useState, useRef, useEffect } from "react";
 import DismissKeyboard from "@/components/DismissKeyboard";
 import AnimatedTempDial from "@/components/AnimatedTempDial";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const filterNumInput = (numStr: string): string =>
   numStr.toString().replace(/[^0-9]/g, "");
@@ -33,6 +34,36 @@ export default function Index(): React.ReactNode {
   );
   const [lowTempStr, setLowTempStr] = useState<string>(LOW_TEMP_STR_DEFAULT);
   const [highTempStr, setHighTempStr] = useState<string>(HIGH_TEMP_STR_DEFAULT);
+
+  const sendPushNotification = usePushNotifications();
+  const lowNotifSent = useRef<boolean>(false);
+  const highNotifSent = useRef<boolean>(false);
+
+  useEffect(() => {
+    const monitorTemps = () => {
+      const degreeType = isCelsius ? `\u00b0C` : `\u00b0F`;
+
+      if (!lowNotifSent.current && currentTemp <= lowTemp) {
+        sendPushNotification(
+          "Low temperature alert",
+          `Temperature below ${lowTemp}${degreeType}`
+        );
+        lowNotifSent.current = true;
+      } else if (lowNotifSent.current && currentTemp > lowTemp) {
+        lowNotifSent.current = false;
+      } else if (!highNotifSent.current && currentTemp >= highTemp) {
+        sendPushNotification(
+          "High temperature alert",
+          `Temperature above ${highTemp}${degreeType}`
+        );
+        highNotifSent.current = true;
+      } else if (highNotifSent.current && currentTemp < highTemp) {
+        highNotifSent.current = false;
+      }
+    };
+
+    if (connected) monitorTemps();
+  }, [currentTemp, lowTemp, highTemp]);
 
   const [countUp, setCountUp] = useState<boolean>(true);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
