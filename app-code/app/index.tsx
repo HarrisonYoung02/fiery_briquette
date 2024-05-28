@@ -10,22 +10,31 @@ import { useRouter } from "expo-router";
 import { useState, useRef, useEffect } from "react";
 import DismissKeyboard from "@/components/DismissKeyboard";
 import AnimatedTempDial from "@/components/AnimatedTempDial";
+import DeviceModal from "@/components/DeviceConnectionModal";
+import useBLE from "@/hooks/useBLE";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const filterNumInput = (numStr: string): string =>
   numStr.toString().replace(/[^0-9]/g, "");
 
 export default function Index(): React.ReactNode {
-  const router = useRouter();
+  const {
+    requestPermissions,
+    scanForPeripherals,
+    allDevices,
+    connectToDevice,
+    connectedDevice,
+    temperature,
+    disconnectFromDevice,
+  } = useBLE();
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [connected, setConnected] = useState<boolean>(false);
-  const [deviceName, setDeviceName] = useState<string>("");
 
   const LOW_TEMP_STR_DEFAULT = "Set Low";
   const HIGH_TEMP_STR_DEFAULT = "Set High";
   const LOW_TEMP_DEFAULT = 40; // Defaults in Celsius
   const HIGH_TEMP_DEFAULT = 150;
   const [isCelsius, setIsCelsius] = useState<boolean>(false);
-  const [currentTemp, setCurrentTemp] = useState<number>(0);
   const [lowTemp, setLowTemp] = useState<number>(
     isCelsius ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32
   );
@@ -43,62 +52,58 @@ export default function Index(): React.ReactNode {
     const monitorTemps = () => {
       const degreeType = isCelsius ? `\u00b0C` : `\u00b0F`;
 
-      if (!lowNotifSent.current && currentTemp <= lowTemp) {
+      if (!lowNotifSent.current && temperature <= lowTemp) {
         sendPushNotification(
           "Low temperature alert",
           `Temperature below ${lowTemp}${degreeType}`
         );
         lowNotifSent.current = true;
-      } else if (lowNotifSent.current && currentTemp > lowTemp) {
+      } else if (lowNotifSent.current && temperature > lowTemp) {
         lowNotifSent.current = false;
-      } else if (!highNotifSent.current && currentTemp >= highTemp) {
+      } else if (!highNotifSent.current && temperature >= highTemp) {
         sendPushNotification(
           "High temperature alert",
           `Temperature above ${highTemp}${degreeType}`
         );
         highNotifSent.current = true;
-      } else if (highNotifSent.current && currentTemp < highTemp) {
+      } else if (highNotifSent.current && temperature < highTemp) {
         highNotifSent.current = false;
       }
     };
 
     if (connected) monitorTemps();
-  }, [currentTemp, lowTemp, highTemp]);
+  }, [temperature, lowTemp, highTemp]);
 
-  const [countUp, setCountUp] = useState<boolean>(true);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const increment = () => {
-    if (connected) {
-      let temp = currentTemp;
-      if (countUp) temp += 10;
-      else temp -= 10;
-      setCurrentTemp(temp);
-      if (temp <= lowTemp - 50) setCountUp(true);
-      else if (temp >= highTemp + 50) setCountUp(false);
+  const scanForDevices = async () => {
+    const isPermissionsEnabled = await requestPermissions();
+    if (isPermissionsEnabled) {
+      scanForPeripherals();
     }
   };
-  useEffect(() => {
-    if (timer.current) clearInterval(timer.current);
-    timer.current = setInterval(increment, 1000);
-  }, [connected, currentTemp, lowTemp, highTemp, countUp]);
 
-  // TODO: replace/update when bluetooth added
-  const connect = (): void => {
-    router.navigate("/bluetooth");
-    setConnected(true);
-    setDeviceName("Example device");
-    setCurrentTemp(200);
+  const hideModal = () => {
+    setIsModalVisible(false);
   };
+
+  const openModal = async () => {
+    scanForDevices();
+    setIsModalVisible(true);
+  };
+
+  const connect = (): void => {
+    openModal();
+    setConnected(true);
+  };
+
   const disconnect = (): void => {
     setConnected(false);
-    setDeviceName("");
+    disconnectFromDevice();
   };
 
   const getCurrentTempStr = (): string => {
     if (!connected) return "Not Connected";
-    if (isCelsius) return `${currentTemp}\u00b0C`;
-    return `${currentTemp}\u00b0F`;
+    if (isCelsius) return `${temperature}\u00b0C`;
+    return `${temperature}\u00b0F`;
   };
 
   return (
@@ -108,7 +113,7 @@ export default function Index(): React.ReactNode {
           <AnimatedTempDial
             lowTemp={lowTemp}
             highTemp={highTemp}
-            currentTemp={currentTemp}
+            currentTemp={temperature}
           />
           <Text style={styles.temperature}>{getCurrentTempStr()}</Text>
           <View style={styles.tempFlagInputHolderRow}>
@@ -219,7 +224,9 @@ export default function Index(): React.ReactNode {
             <Text style={styles.bluetoothLabelLine}>Bluetooth</Text>
             <Text style={styles.bluetoothLabelLine}>
               Connected to:{" "}
-              <Text style={styles.bluetoothLabelDevice}>{deviceName}</Text>
+              <Text style={styles.bluetoothLabelDevice}>
+                {connectedDevice ? connectedDevice.name : " "}
+              </Text>
             </Text>
           </View>
           <Pressable
@@ -239,6 +246,12 @@ export default function Index(): React.ReactNode {
             </Text>
           </Pressable>
         </View>
+        <DeviceModal
+          closeModal={hideModal}
+          visible={isModalVisible}
+          connectToPeripheral={connectToDevice}
+          devices={allDevices}
+        />
       </View>
     </DismissKeyboard>
   );
@@ -286,7 +299,8 @@ const styles = StyleSheet.create({
   tempFlagInputHigh: { backgroundColor: "pink" },
   bluetoothLabel: {
     flexDirection: "column",
-    margin: 10,
+    margin: "2.5%",
+    width: "60%",
   },
   tempFlagInputReset: {
     width: 25,
@@ -302,9 +316,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   bluetoothButton: {
-    margin: 10,
+    margin: "2.5%",
     textAlign: "center",
-    width: 125,
+    width: "30%",
     height: 50,
     borderColor: "black",
     borderWidth: 3,
