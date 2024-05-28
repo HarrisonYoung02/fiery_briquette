@@ -34,7 +34,6 @@ export default function Index(): React.ReactNode {
   const LOW_TEMP_DEFAULT = 40; // Defaults in Celsius
   const HIGH_TEMP_DEFAULT = 150;
   const [isCelsius, setIsCelsius] = useState<boolean>(false);
-  const [currentTemp, setCurrentTemp] = useState<number>(0);
   const [lowTemp, setLowTemp] = useState<number>(
     isCelsius ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32
   );
@@ -43,9 +42,6 @@ export default function Index(): React.ReactNode {
   );
   const [lowTempStr, setLowTempStr] = useState<string>(LOW_TEMP_STR_DEFAULT);
   const [highTempStr, setHighTempStr] = useState<string>(HIGH_TEMP_STR_DEFAULT);
-
-  const [countUp, setCountUp] = useState<boolean>(true);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const scanForDevices = async () => {
     const isPermissionsEnabled = await requestPermissions();
@@ -63,22 +59,6 @@ export default function Index(): React.ReactNode {
     setIsModalVisible(true);
   };
 
-  const increment = () => {
-    if (connected) {
-      let temp = currentTemp;
-      if (countUp) temp += 10;
-      else temp -= 10;
-      setCurrentTemp(temp);
-      if (temp <= lowTemp - 50) setCountUp(true);
-      else if (temp >= highTemp + 50) setCountUp(false);
-    }
-  };
-  useEffect(() => {
-    if (timer.current) clearInterval(timer.current);
-    timer.current = setInterval(increment, 1000);
-  }, [connected, currentTemp, lowTemp, highTemp, countUp]);
-
-  // TODO: replace/update when bluetooth added
   const connect = (): void => {
     openModal();
     setConnected(true);
@@ -91,8 +71,8 @@ export default function Index(): React.ReactNode {
 
   const getCurrentTempStr = (): string => {
     if (!connected) return "Not Connected";
-    if (isCelsius) return `${currentTemp}\u00b0C`;
-    return `${currentTemp}\u00b0F`;
+    if (isCelsius) return `${temperature}\u00b0C`;
+    return `${temperature}\u00b0F`;
   };
 
   return (
@@ -102,7 +82,7 @@ export default function Index(): React.ReactNode {
           <AnimatedTempDial
             lowTemp={lowTemp}
             highTemp={highTemp}
-            currentTemp={currentTemp}
+            currentTemp={temperature}
           />
           <Text style={styles.temperature}>{getCurrentTempStr()}</Text>
           <View style={styles.tempFlagInputHolderRow}>

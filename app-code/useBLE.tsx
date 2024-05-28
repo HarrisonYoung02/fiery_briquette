@@ -114,6 +114,7 @@ function useBLE(): BluetoothLowEnergyApi {
       await deviceConnection.discoverAllServicesAndCharacteristics();
       bleManager.stopDeviceScan();
       //   startStreamingData(deviceConnection);
+      startFakingData();
     } catch (e) {
       console.log("FAILED TO CONNECT", e);
     }
@@ -158,6 +159,23 @@ function useBLE(): BluetoothLowEnergyApi {
       console.log("No Device Connected");
     }
   };
+
+  const startFakingData = () => {
+    console.log("Generating fake data for testing");
+    const MIN = 0,
+      MAX = 300;
+    const increment = (countUp: boolean) => {
+      setTemperature((oldTemp): number => {
+        const newTemp = oldTemp + (countUp ? 10 : -10);
+        if (newTemp < MIN) countUp = true;
+        else if (newTemp > MAX) countUp = false;
+        return newTemp;
+      });
+      setTimeout(() => increment(countUp), 1000);
+    };
+    increment(true);
+  };
+
   return {
     scanForPeripherals,
     requestPermissions,
