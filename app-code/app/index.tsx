@@ -11,7 +11,7 @@ import { useState, useRef, useEffect } from "react";
 import DismissKeyboard from "@/components/DismissKeyboard";
 import AnimatedTempDial from "@/components/AnimatedTempDial";
 import DeviceModal from "@/components/DeviceConnectionModal";
-import useBLE from "@/useBLE";
+import useBLE from "@/hooks/useBLE";
 
 const filterNumInput = (numStr: string): string =>
   numStr.toString().replace(/[^0-9]/g, "");
