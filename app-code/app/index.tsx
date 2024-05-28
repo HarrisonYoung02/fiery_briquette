@@ -268,7 +268,8 @@ const styles = StyleSheet.create({
   tempFlagInputHigh: { backgroundColor: "pink" },
   bluetoothLabel: {
     flexDirection: "column",
-    margin: 10,
+    margin: "2.5%",
+    width: "60%",
   },
   tempFlagInputReset: {
     width: 25,
@@ -284,9 +285,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   bluetoothButton: {
-    margin: 10,
+    margin: "2.5%",
     textAlign: "center",
-    width: 125,
+    width: "30%",
     height: 50,
     borderColor: "black",
     borderWidth: 3,
