@@ -43,7 +43,6 @@ export default function Index(): React.ReactNode {
   const sendPushNotification = usePushNotifications();
 
   // TODO: Add real check for Celsius once settings are added
-  // TODO: Add check for device after adding ability to remember connection
   const [monitoredData] = useState({
     currentTemp: temperature,
     lowTemp: false ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32,
@@ -53,53 +52,69 @@ export default function Index(): React.ReactNode {
   });
 
   useEffect(() => {
+    return () => {
+      monitoredData.deviceConnected = false;
+      BackgroundService.stop();
+    };
+  }, []);
+
+  useEffect(() => {
     monitoredData.currentTemp = temperature;
   }, [temperature]);
 
+  useEffect(() => {
+    if (connectedDevice) monitoredData.deviceConnected = true;
+    else monitoredData.deviceConnected = false;
+  }, [connectedDevice]);
+
   // TODO: Add icon to notifications
   const monitorTemps = async () => {
-    await new Promise(async () => {
-      let lowNotifSent = false,
-        highNotifSent = false;
-      while (monitoredData.deviceConnected) {
-        const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
-
-        BackgroundService.updateNotification({
-          taskDesc: monitoredData.currentTemp + degreeType,
-        });
-
-        if (
-          !lowNotifSent &&
-          monitoredData.currentTemp <= monitoredData.lowTemp
-        ) {
-          sendPushNotification(
-            "Low temperature alert",
-            `Temperature below ${monitoredData.lowTemp}${degreeType}`
-          );
-          lowNotifSent = true;
-        } else if (
-          lowNotifSent &&
-          monitoredData.currentTemp > monitoredData.lowTemp
-        ) {
-          lowNotifSent = false;
-        } else if (
-          !highNotifSent &&
-          monitoredData.currentTemp >= monitoredData.highTemp
-        ) {
-          sendPushNotification(
-            "High temperature alert",
-            `Temperature above ${monitoredData.highTemp}${degreeType}`
-          );
-          highNotifSent = true;
-        } else if (
-          highNotifSent &&
-          monitoredData.currentTemp < monitoredData.highTemp
-        ) {
+    try {
+      await new Promise(async () => {
+        let lowNotifSent = false,
           highNotifSent = false;
+        while (monitoredData && monitoredData.deviceConnected) {
+          const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
+
+          BackgroundService.updateNotification({
+            taskDesc: monitoredData.currentTemp + degreeType,
+          });
+
+          if (
+            !lowNotifSent &&
+            monitoredData.currentTemp <= monitoredData.lowTemp
+          ) {
+            sendPushNotification(
+              "Low temperature alert",
+              `Temperature below ${monitoredData.lowTemp}${degreeType}`
+            );
+            lowNotifSent = true;
+          } else if (
+            lowNotifSent &&
+            monitoredData.currentTemp > monitoredData.lowTemp
+          ) {
+            lowNotifSent = false;
+          } else if (
+            !highNotifSent &&
+            monitoredData.currentTemp >= monitoredData.highTemp
+          ) {
+            sendPushNotification(
+              "High temperature alert",
+              `Temperature above ${monitoredData.highTemp}${degreeType}`
+            );
+            highNotifSent = true;
+          } else if (
+            highNotifSent &&
+            monitoredData.currentTemp < monitoredData.highTemp
+          ) {
+            highNotifSent = false;
+          }
+          await sleep(1000);
         }
-        await sleep(1000);
-      }
-    });
+      });
+    } catch (error) {
+      console.log("Promise error: " + error);
+    }
   };
 
   const monitorTempsOptions = {
@@ -132,11 +147,9 @@ export default function Index(): React.ReactNode {
 
   const connect = (): void => {
     openModal();
-    monitoredData.deviceConnected = true;
   };
 
   const disconnect = (): void => {
-    monitoredData.deviceConnected = false;
     disconnectFromDevice();
   };
 
@@ -174,11 +187,9 @@ export default function Index(): React.ReactNode {
                 onEndEditing={() => {
                   if (lowTempStr === "") setLowTempStr(LOW_TEMP_STR_DEFAULT);
                   else {
-                    // setLowTemp(Number(lowTempStr));
                     monitoredData.lowTemp = Number(lowTempStr);
                     if (Number(lowTempStr) >= monitoredData.highTemp) {
                       setHighTempStr(`${Number(lowTempStr) + 1}`);
-                      // setHighTemp(Number(lowTempStr) + 1);
                       monitoredData.highTemp = Number(lowTempStr) + 1;
                     }
                   }
@@ -192,11 +203,9 @@ export default function Index(): React.ReactNode {
 
                   if (lowDefault >= monitoredData.highTemp) {
                     setHighTempStr(`${lowDefault + 1}`);
-                    // setHighTemp(lowDefault + 1);
                     monitoredData.highTemp = lowDefault + 1;
                   }
                   setLowTempStr(LOW_TEMP_STR_DEFAULT);
-                  // setLowTemp(lowDefault);
                   monitoredData.lowTemp = lowDefault;
                 }}
               >
@@ -228,11 +237,9 @@ export default function Index(): React.ReactNode {
                 onEndEditing={() => {
                   if (highTempStr === "") setHighTempStr(HIGH_TEMP_STR_DEFAULT);
                   else {
-                    // setHighTemp(Number(highTempStr));
                     monitoredData.highTemp = Number(highTempStr);
                     if (Number(highTempStr) <= monitoredData.lowTemp) {
                       setLowTempStr(`${Number(highTempStr) - 1}`);
-                      // setLowTemp(Number(highTempStr) - 1);
                       monitoredData.lowTemp = Number(highTempStr) - 1;
                     }
                   }
@@ -246,11 +253,9 @@ export default function Index(): React.ReactNode {
 
                   if (highDefault <= monitoredData.lowTemp) {
                     setLowTempStr(`${highDefault - 1}`);
-                    // setLowTemp(highDefault - 1);
                     monitoredData.lowTemp = highDefault - 1;
                   }
                   setHighTempStr(HIGH_TEMP_STR_DEFAULT);
-                  // setHighTemp(highDefault);
                   monitoredData.highTemp = highDefault;
                 }}
               >
