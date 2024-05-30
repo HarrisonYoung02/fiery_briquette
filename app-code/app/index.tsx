@@ -113,7 +113,7 @@ export default function Index(): React.ReactNode {
       type: "mipmap",
     },
     color: "#ff00ff",
-    linkingURI: "fiery-briquette://chat/jane",
+    linkingURI: "fiery-briquette://",
   };
 
   useEffect(() => {
