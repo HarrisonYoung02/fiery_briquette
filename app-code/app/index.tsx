@@ -53,6 +53,7 @@ export default function Index(): React.ReactNode {
 
   useEffect(() => {
     return () => {
+      // Just calling stop() isn't enough, b/c task continues running when app is reopened for some reason
       monitoredData.deviceConnected = false;
       BackgroundService.stop();
     };
@@ -69,52 +70,48 @@ export default function Index(): React.ReactNode {
 
   // TODO: Add icon to notifications
   const monitorTemps = async () => {
-    try {
-      await new Promise(async () => {
-        let lowNotifSent = false,
+    await new Promise(async () => {
+      let lowNotifSent = false,
+        highNotifSent = false;
+      while (monitoredData && monitoredData.deviceConnected) {
+        const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
+
+        BackgroundService.updateNotification({
+          taskDesc: monitoredData.currentTemp + degreeType,
+        });
+
+        if (
+          !lowNotifSent &&
+          monitoredData.currentTemp <= monitoredData.lowTemp
+        ) {
+          sendPushNotification(
+            "Low temperature alert",
+            `Temperature below ${monitoredData.lowTemp}${degreeType}`
+          );
+          lowNotifSent = true;
+        } else if (
+          lowNotifSent &&
+          monitoredData.currentTemp > monitoredData.lowTemp
+        ) {
+          lowNotifSent = false;
+        } else if (
+          !highNotifSent &&
+          monitoredData.currentTemp >= monitoredData.highTemp
+        ) {
+          sendPushNotification(
+            "High temperature alert",
+            `Temperature above ${monitoredData.highTemp}${degreeType}`
+          );
+          highNotifSent = true;
+        } else if (
+          highNotifSent &&
+          monitoredData.currentTemp < monitoredData.highTemp
+        ) {
           highNotifSent = false;
-        while (monitoredData && monitoredData.deviceConnected) {
-          const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
-
-          BackgroundService.updateNotification({
-            taskDesc: monitoredData.currentTemp + degreeType,
-          });
-
-          if (
-            !lowNotifSent &&
-            monitoredData.currentTemp <= monitoredData.lowTemp
-          ) {
-            sendPushNotification(
-              "Low temperature alert",
-              `Temperature below ${monitoredData.lowTemp}${degreeType}`
-            );
-            lowNotifSent = true;
-          } else if (
-            lowNotifSent &&
-            monitoredData.currentTemp > monitoredData.lowTemp
-          ) {
-            lowNotifSent = false;
-          } else if (
-            !highNotifSent &&
-            monitoredData.currentTemp >= monitoredData.highTemp
-          ) {
-            sendPushNotification(
-              "High temperature alert",
-              `Temperature above ${monitoredData.highTemp}${degreeType}`
-            );
-            highNotifSent = true;
-          } else if (
-            highNotifSent &&
-            monitoredData.currentTemp < monitoredData.highTemp
-          ) {
-            highNotifSent = false;
-          }
-          await sleep(1000);
         }
-      });
-    } catch (error) {
-      console.log("Promise error: " + error);
-    }
+        await sleep(1000);
+      }
+    });
   };
 
   const monitorTempsOptions = {
