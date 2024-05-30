@@ -57,9 +57,7 @@ export const usePushNotifications = (): Function => {
   useEffect(() => {
     registerForPushNotificationsAsync();
     responseListener.current =
-      Notifications.addNotificationResponseReceivedListener((response) =>
-        console.log(response)
-      );
+      Notifications.addNotificationResponseReceivedListener(() => {});
     return () => {
       Notifications.removeNotificationSubscription(
         notificationListener.current!
