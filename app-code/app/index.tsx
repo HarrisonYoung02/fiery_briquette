@@ -5,10 +5,8 @@ import {
   Pressable,
   TextInput,
   Image,
-  Linking,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Device } from "react-native-ble-plx";
 import BackgroundService from "react-native-background-actions";
 import DismissKeyboard from "@/components/DismissKeyboard";
@@ -115,12 +113,6 @@ export default function Index(): React.ReactNode {
     color: "#ff00ff",
     linkingURI: "fiery-briquette://",
   };
-
-  useEffect(() => {
-    Linking.addEventListener("url", (event) => {
-      console.log(event.url);
-    });
-  }, []);
 
   const scanForDevices = async () => {
     const isPermissionsEnabled = await requestPermissions();
