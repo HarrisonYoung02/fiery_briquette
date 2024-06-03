@@ -6,15 +6,20 @@ import {
   TextInput,
   Image,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { Device } from "react-native-ble-plx";
+import BackgroundService from "react-native-background-actions";
 import DismissKeyboard from "@/components/DismissKeyboard";
 import AnimatedTempDial from "@/components/AnimatedTempDial";
 import DeviceModal from "@/components/DeviceConnectionModal";
 import useBLE from "@/hooks/useBLE";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const filterNumInput = (numStr: string): string =>
   numStr.toString().replace(/[^0-9]/g, "");
+
+const sleep = (time: any) =>
+  new Promise<void>((resolve) => setTimeout(() => resolve(), time));
 
 export default function Index(): React.ReactNode {
   const {
@@ -27,21 +32,99 @@ export default function Index(): React.ReactNode {
     disconnectFromDevice,
   } = useBLE();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [connected, setConnected] = useState<boolean>(false);
 
   const LOW_TEMP_STR_DEFAULT = "Set Low";
   const HIGH_TEMP_STR_DEFAULT = "Set High";
   const LOW_TEMP_DEFAULT = 40; // Defaults in Celsius
   const HIGH_TEMP_DEFAULT = 150;
-  const [isCelsius, setIsCelsius] = useState<boolean>(false);
-  const [lowTemp, setLowTemp] = useState<number>(
-    isCelsius ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32
-  );
-  const [highTemp, setHighTemp] = useState<number>(
-    isCelsius ? HIGH_TEMP_DEFAULT : HIGH_TEMP_DEFAULT * (9 / 5) + 32
-  );
   const [lowTempStr, setLowTempStr] = useState<string>(LOW_TEMP_STR_DEFAULT);
   const [highTempStr, setHighTempStr] = useState<string>(HIGH_TEMP_STR_DEFAULT);
+
+  const sendPushNotification = usePushNotifications();
+
+  // TODO: Add real check for Celsius once settings are added
+  const [monitoredData] = useState({
+    currentTemp: temperature,
+    lowTemp: false ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32,
+    highTemp: false ? HIGH_TEMP_DEFAULT : HIGH_TEMP_DEFAULT * (9 / 5) + 32,
+    isCelsius: false,
+    deviceConnected: false,
+  });
+
+  useEffect(() => {
+    return () => {
+      // Just calling stop() isn't enough, b/c task continues running when app is reopened for some reason
+      monitoredData.deviceConnected = false;
+      BackgroundService.stop();
+    };
+  }, []);
+
+  useEffect(() => {
+    monitoredData.currentTemp = temperature;
+  }, [temperature]);
+
+  useEffect(() => {
+    if (connectedDevice) monitoredData.deviceConnected = true;
+    else monitoredData.deviceConnected = false;
+  }, [connectedDevice]);
+
+  // TODO: Add icon to notifications
+  const monitorTemps = async () => {
+    await new Promise(async () => {
+      let lowNotifSent = false,
+        highNotifSent = false;
+      while (monitoredData && monitoredData.deviceConnected) {
+        const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
+
+        BackgroundService.updateNotification({
+          taskDesc: monitoredData.currentTemp + degreeType,
+        });
+
+        if (
+          !lowNotifSent &&
+          monitoredData.currentTemp <= monitoredData.lowTemp
+        ) {
+          sendPushNotification(
+            "Low temperature alert",
+            `Temperature below ${monitoredData.lowTemp}${degreeType}`
+          );
+          lowNotifSent = true;
+        } else if (
+          lowNotifSent &&
+          monitoredData.currentTemp > monitoredData.lowTemp
+        ) {
+          lowNotifSent = false;
+        } else if (
+          !highNotifSent &&
+          monitoredData.currentTemp >= monitoredData.highTemp
+        ) {
+          sendPushNotification(
+            "High temperature alert",
+            `Temperature above ${monitoredData.highTemp}${degreeType}`
+          );
+          highNotifSent = true;
+        } else if (
+          highNotifSent &&
+          monitoredData.currentTemp < monitoredData.highTemp
+        ) {
+          highNotifSent = false;
+        }
+        await sleep(1000);
+      }
+    });
+  };
+
+  const monitorTempsOptions = {
+    taskName: "Monitor Temperature",
+    taskTitle: "Temperature",
+    taskDesc: "Waiting for reading",
+    taskIcon: {
+      name: "ic_launcher",
+      type: "mipmap",
+    },
+    color: "#ff00ff",
+    linkingURI: "fiery-briquette://",
+  };
 
   const scanForDevices = async () => {
     const isPermissionsEnabled = await requestPermissions();
@@ -61,17 +144,15 @@ export default function Index(): React.ReactNode {
 
   const connect = (): void => {
     openModal();
-    setConnected(true);
   };
 
   const disconnect = (): void => {
-    setConnected(false);
     disconnectFromDevice();
   };
 
   const getCurrentTempStr = (): string => {
-    if (!connected) return "Not Connected";
-    if (isCelsius) return `${temperature}\u00b0C`;
+    if (!monitoredData.deviceConnected) return "Not Connected";
+    if (monitoredData.isCelsius) return `${temperature}\u00b0C`;
     return `${temperature}\u00b0F`;
   };
 
@@ -80,8 +161,8 @@ export default function Index(): React.ReactNode {
       <View style={styles.container}>
         <View style={styles.body}>
           <AnimatedTempDial
-            lowTemp={lowTemp}
-            highTemp={highTemp}
+            lowTemp={monitoredData.lowTemp}
+            highTemp={monitoredData.highTemp}
             currentTemp={temperature}
           />
           <Text style={styles.temperature}>{getCurrentTempStr()}</Text>
@@ -103,26 +184,26 @@ export default function Index(): React.ReactNode {
                 onEndEditing={() => {
                   if (lowTempStr === "") setLowTempStr(LOW_TEMP_STR_DEFAULT);
                   else {
-                    setLowTemp(Number(lowTempStr));
-                    if (Number(lowTempStr) >= highTemp) {
+                    monitoredData.lowTemp = Number(lowTempStr);
+                    if (Number(lowTempStr) >= monitoredData.highTemp) {
                       setHighTempStr(`${Number(lowTempStr) + 1}`);
-                      setHighTemp(Number(lowTempStr) + 1);
+                      monitoredData.highTemp = Number(lowTempStr) + 1;
                     }
                   }
                 }}
               ></TextInput>
               <Pressable
                 onPress={() => {
-                  const lowDefault = isCelsius
+                  const lowDefault = monitoredData.isCelsius
                     ? LOW_TEMP_DEFAULT
                     : LOW_TEMP_DEFAULT * (9 / 5) + 32;
 
-                  if (lowDefault >= highTemp) {
+                  if (lowDefault >= monitoredData.highTemp) {
                     setHighTempStr(`${lowDefault + 1}`);
-                    setHighTemp(lowDefault + 1);
+                    monitoredData.highTemp = lowDefault + 1;
                   }
                   setLowTempStr(LOW_TEMP_STR_DEFAULT);
-                  setLowTemp(lowDefault);
+                  monitoredData.lowTemp = lowDefault;
                 }}
               >
                 <Image
@@ -153,26 +234,26 @@ export default function Index(): React.ReactNode {
                 onEndEditing={() => {
                   if (highTempStr === "") setHighTempStr(HIGH_TEMP_STR_DEFAULT);
                   else {
-                    setHighTemp(Number(highTempStr));
-                    if (Number(highTempStr) <= lowTemp) {
+                    monitoredData.highTemp = Number(highTempStr);
+                    if (Number(highTempStr) <= monitoredData.lowTemp) {
                       setLowTempStr(`${Number(highTempStr) - 1}`);
-                      setLowTemp(Number(highTempStr) - 1);
+                      monitoredData.lowTemp = Number(highTempStr) - 1;
                     }
                   }
                 }}
               ></TextInput>
               <Pressable
                 onPress={() => {
-                  const highDefault = isCelsius
+                  const highDefault = monitoredData.isCelsius
                     ? HIGH_TEMP_DEFAULT
                     : HIGH_TEMP_DEFAULT * (9 / 5) + 32;
 
-                  if (highDefault <= lowTemp) {
+                  if (highDefault <= monitoredData.lowTemp) {
                     setLowTempStr(`${highDefault - 1}`);
-                    setLowTemp(highDefault - 1);
+                    monitoredData.lowTemp = highDefault - 1;
                   }
                   setHighTempStr(HIGH_TEMP_STR_DEFAULT);
-                  setHighTemp(highDefault);
+                  monitoredData.highTemp = highDefault;
                 }}
               >
                 <Image
@@ -201,24 +282,27 @@ export default function Index(): React.ReactNode {
           <Pressable
             style={[
               styles.bluetoothButton,
-              connected
+              monitoredData.deviceConnected
                 ? styles.bluetoothButtonDisconnect
                 : styles.bluetoothButtonConnect,
             ]}
             onPress={() => {
-              if (connected) disconnect();
+              if (monitoredData.deviceConnected) disconnect();
               else connect();
             }}
           >
             <Text style={styles.bluetoothButtonText}>
-              {connected ? "Disconnect" : "Connect"}
+              {monitoredData.deviceConnected ? "Disconnect" : "Connect"}
             </Text>
           </Pressable>
         </View>
         <DeviceModal
           closeModal={hideModal}
           visible={isModalVisible}
-          connectToPeripheral={connectToDevice}
+          connectToPeripheral={async (device: Device) => {
+            await connectToDevice(device);
+            await BackgroundService.start(monitorTemps, monitorTempsOptions);
+          }}
           devices={allDevices}
         />
       </View>
