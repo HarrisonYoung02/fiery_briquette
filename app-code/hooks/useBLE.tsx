@@ -11,8 +11,8 @@ import * as ExpoDevice from "expo-device";
 
 import base64 from "react-native-base64";
 
-const ARDUINO_UUID = ""; // TODO: should be on the arduino instructions
-const ARDUINO_CHARACTERISTIC = ""; // TODO: should be on the arduino instructions
+const ARDUINO_UUID = "7f47e0be-878d-45b9-9bc7-11794a65c5e9";
+const ARDUINO_CHARACTERISTIC = "52fc7e02-ab71-48d9-8cb4-48e5341a83d5";
 
 interface BluetoothLowEnergyApi {
   requestPermissions(): Promise<boolean>;
@@ -113,8 +113,7 @@ function useBLE(): BluetoothLowEnergyApi {
       setConnectedDevice(deviceConnection);
       await deviceConnection.discoverAllServicesAndCharacteristics();
       bleManager.stopDeviceScan();
-      //   startStreamingData(deviceConnection);
-      startFakingData();
+      startStreamingData(deviceConnection);
     } catch (e) {
       console.log("FAILED TO CONNECT", e);
     }
@@ -141,11 +140,7 @@ function useBLE(): BluetoothLowEnergyApi {
     }
 
     const rawData = base64.decode(characteristic.value);
-    let newTemp: number = -1;
-
-    // TODO: Logic for getting temp from raw data
-
-    setTemperature(newTemp);
+    setTemperature(parseInt(rawData));
   };
 
   const startStreamingData = async (device: Device) => {
@@ -158,22 +153,6 @@ function useBLE(): BluetoothLowEnergyApi {
     } else {
       console.log("No Device Connected");
     }
-  };
-
-  const startFakingData = () => {
-    console.log("Generating fake data for testing");
-    const MIN = 0,
-      MAX = 300;
-    const increment = (countUp: boolean) => {
-      setTemperature((oldTemp): number => {
-        const newTemp = oldTemp + (countUp ? 10 : -10);
-        if (newTemp < MIN) countUp = true;
-        else if (newTemp > MAX) countUp = false;
-        return newTemp;
-      });
-      setTimeout(() => increment(countUp), 1000);
-    };
-    increment(true);
   };
 
   return {
