@@ -1,0 +1,297 @@
+diff --git a/node_modules/react-native-background-actions/android/build.gradle b/node_modules/react-native-background-actions/android/build.gradle
+index f7c92c8..0205263 100644
+--- a/node_modules/react-native-background-actions/android/build.gradle
++++ b/node_modules/react-native-background-actions/android/build.gradle
+@@ -5,11 +5,11 @@ def safeExtGet(prop, fallback) {
+ }
+ 
+ android {
+-    compileSdkVersion safeExtGet('compileSdkVersion', 31)
++    compileSdkVersion safeExtGet('compileSdkVersion', 34)
+ 
+     defaultConfig {
+         minSdkVersion safeExtGet('minSdkVersion', 16)
+-        targetSdkVersion safeExtGet('targetSdkVersion', 31)
++        targetSdkVersion safeExtGet('targetSdkVersion', 34)
+     }
+ }
+ 
+diff --git a/node_modules/react-native-background-actions/android/build/.transforms/8087d5fcc4f440a58618ffc3fa5178b8/results.bin b/node_modules/react-native-background-actions/android/build/.transforms/8087d5fcc4f440a58618ffc3fa5178b8/results.bin
+new file mode 100644
+index 0000000..0d259dd
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/.transforms/8087d5fcc4f440a58618ffc3fa5178b8/results.bin
+@@ -0,0 +1 @@
++o/classes
+diff --git a/node_modules/react-native-background-actions/android/build/.transforms/8087d5fcc4f440a58618ffc3fa5178b8/transformed/classes/classes_dex/classes.dex b/node_modules/react-native-background-actions/android/build/.transforms/8087d5fcc4f440a58618ffc3fa5178b8/transformed/classes/classes_dex/classes.dex
+new file mode 100644
+index 0000000..350147e
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/.transforms/8087d5fcc4f440a58618ffc3fa5178b8/transformed/classes/classes_dex/classes.dex differ
+diff --git a/node_modules/react-native-background-actions/android/build/generated/source/buildConfig/debug/com/asterinet/react/bgactions/BuildConfig.java b/node_modules/react-native-background-actions/android/build/generated/source/buildConfig/debug/com/asterinet/react/bgactions/BuildConfig.java
+new file mode 100644
+index 0000000..9ff4817
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/generated/source/buildConfig/debug/com/asterinet/react/bgactions/BuildConfig.java
+@@ -0,0 +1,10 @@
++/**
++ * Automatically generated file. DO NOT MODIFY
++ */
++package com.asterinet.react.bgactions;
++
++public final class BuildConfig {
++  public static final boolean DEBUG = Boolean.parseBoolean("true");
++  public static final String LIBRARY_PACKAGE_NAME = "com.asterinet.react.bgactions";
++  public static final String BUILD_TYPE = "debug";
++}
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml b/node_modules/react-native-background-actions/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml
+new file mode 100644
+index 0000000..ef0e3b1
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/AndroidManifest.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.asterinet.react.bgactions" >
++
++    <uses-sdk android:minSdkVersion="23" />
++
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++
++    <application>
++        <service android:name="com.asterinet.react.bgactions.RNBackgroundActionsTask" />
++    </application>
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json b/node_modules/react-native-background-actions/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json
+new file mode 100644
+index 0000000..5468a78
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/aapt_friendly_merged_manifests/debug/aapt/output-metadata.json
+@@ -0,0 +1,18 @@
++{
++  "version": 3,
++  "artifactType": {
++    "type": "AAPT_FRIENDLY_MERGED_MANIFESTS",
++    "kind": "Directory"
++  },
++  "applicationId": "com.asterinet.react.bgactions",
++  "variantName": "debug",
++  "elements": [
++    {
++      "type": "SINGLE",
++      "filters": [],
++      "attributes": [],
++      "outputFile": "AndroidManifest.xml"
++    }
++  ],
++  "elementType": "File"
++}
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/aar_metadata/debug/aar-metadata.properties b/node_modules/react-native-background-actions/android/build/intermediates/aar_metadata/debug/aar-metadata.properties
+new file mode 100644
+index 0000000..1211b1e
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/aar_metadata/debug/aar-metadata.properties
+@@ -0,0 +1,6 @@
++aarFormatVersion=1.0
++aarMetadataVersion=1.0
++minCompileSdk=1
++minCompileSdkExtension=0
++minAndroidGradlePluginVersion=1.0.0
++coreLibraryDesugaringEnabled=false
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json b/node_modules/react-native-background-actions/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json
+new file mode 100644
+index 0000000..9e26dfe
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/annotation_processor_list/debug/annotationProcessors.json
+@@ -0,0 +1 @@
++{}
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/compile_library_classes_jar/debug/classes.jar b/node_modules/react-native-background-actions/android/build/intermediates/compile_library_classes_jar/debug/classes.jar
+new file mode 100644
+index 0000000..2c0ec54
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/intermediates/compile_library_classes_jar/debug/classes.jar differ
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/compile_r_class_jar/debug/R.jar b/node_modules/react-native-background-actions/android/build/intermediates/compile_r_class_jar/debug/R.jar
+new file mode 100644
+index 0000000..571fa4c
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/intermediates/compile_r_class_jar/debug/R.jar differ
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/compile_symbol_list/debug/R.txt b/node_modules/react-native-background-actions/android/build/intermediates/compile_symbol_list/debug/R.txt
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties b/node_modules/react-native-background-actions/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+new file mode 100644
+index 0000000..349090c
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties
+@@ -0,0 +1 @@
++#Wed May 29 15:07:05 EDT 2024
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml b/node_modules/react-native-background-actions/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+new file mode 100644
+index 0000000..9123f8e
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/incremental/debug/packageDebugResources/merger.xml
+@@ -0,0 +1,2 @@
++<?xml version="1.0" encoding="utf-8"?>
++<merger version="3"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\debug\res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\build\generated\res\resValues\debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\build\generated\res\resValues\debug"/></dataSet><mergedItems/></merger>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundActionsModule.class b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundActionsModule.class
+new file mode 100644
+index 0000000..4a9a83a
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundActionsModule.class differ
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundActionsPackage.class b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundActionsPackage.class
+new file mode 100644
+index 0000000..c22c656
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundActionsPackage.class differ
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundTaskOptions.class b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundTaskOptions.class
+new file mode 100644
+index 0000000..d0719cb
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BackgroundTaskOptions.class differ
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BuildConfig.class b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BuildConfig.class
+new file mode 100644
+index 0000000..f121b77
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/BuildConfig.class differ
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/RNBackgroundActionsTask.class b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/RNBackgroundActionsTask.class
+new file mode 100644
+index 0000000..beb92a1
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/intermediates/javac/debug/classes/com/asterinet/react/bgactions/RNBackgroundActionsTask.class differ
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/local_only_symbol_list/debug/R-def.txt b/node_modules/react-native-background-actions/android/build/intermediates/local_only_symbol_list/debug/R-def.txt
+new file mode 100644
+index 0000000..78ac5b8
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/local_only_symbol_list/debug/R-def.txt
+@@ -0,0 +1,2 @@
++R_DEF: Internal format may change without notice
++local
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt b/node_modules/react-native-background-actions/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt
+new file mode 100644
+index 0000000..0672652
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/manifest_merge_blame_file/debug/manifest-merger-blame-debug-report.txt
+@@ -0,0 +1,18 @@
++1<?xml version="1.0" encoding="utf-8"?>
++2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++3    package="com.asterinet.react.bgactions" >
++4
++5    <uses-sdk android:minSdkVersion="23" />
++6
++7    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++7-->C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:2:5-77
++7-->C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:2:22-74
++8
++9    <application>
++9-->C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:3:5-5:19
++10        <service android:name="com.asterinet.react.bgactions.RNBackgroundActionsTask" />
++10-->C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:4:9-59
++10-->C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:4:18-57
++11    </application>
++12
++13</manifest>
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml b/node_modules/react-native-background-actions/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml
+new file mode 100644
+index 0000000..ef0e3b1
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/merged_manifest/debug/AndroidManifest.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.asterinet.react.bgactions" >
++
++    <uses-sdk android:minSdkVersion="23" />
++
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++
++    <application>
++        <service android:name="com.asterinet.react.bgactions.RNBackgroundActionsTask" />
++    </application>
++
++</manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/navigation_json/debug/navigation.json b/node_modules/react-native-background-actions/android/build/intermediates/navigation_json/debug/navigation.json
+new file mode 100644
+index 0000000..0637a08
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/navigation_json/debug/navigation.json
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar b/node_modules/react-native-background-actions/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar
+new file mode 100644
+index 0000000..c7aefd4
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/intermediates/runtime_library_classes_jar/debug/classes.jar differ
+diff --git a/node_modules/react-native-background-actions/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt b/node_modules/react-native-background-actions/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt
+new file mode 100644
+index 0000000..a1e75d8
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/intermediates/symbol_list_with_package_name/debug/package-aware-r.txt
+@@ -0,0 +1 @@
++com.asterinet.react.bgactions
+diff --git a/node_modules/react-native-background-actions/android/build/outputs/logs/manifest-merger-debug-report.txt b/node_modules/react-native-background-actions/android/build/outputs/logs/manifest-merger-debug-report.txt
+new file mode 100644
+index 0000000..87817bf
+--- /dev/null
++++ b/node_modules/react-native-background-actions/android/build/outputs/logs/manifest-merger-debug-report.txt
+@@ -0,0 +1,27 @@
++-- Merging decision tree log ---
++manifest
++ADDED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:1:1-6:12
++INJECTED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:1:1-6:12
++	package
++		ADDED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:1:70-109
++		INJECTED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml
++	xmlns:android
++		ADDED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:1:11-69
++uses-permission#android.permission.FOREGROUND_SERVICE
++ADDED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:2:5-77
++	android:name
++		ADDED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:2:22-74
++application
++ADDED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:3:5-5:19
++service#com.asterinet.react.bgactions.RNBackgroundActionsTask
++ADDED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:4:9-59
++	android:name
++		ADDED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml:4:18-57
++uses-sdk
++INJECTED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml reason: use-sdk injection requested
++INJECTED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml
++INJECTED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml
++	android:targetSdkVersion
++		INJECTED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml
++	android:minSdkVersion
++		INJECTED from C:\Users\Tristan\Documents\GitHub\fiery_briquette\app-code\node_modules\react-native-background-actions\android\src\main\AndroidManifest.xml
+diff --git a/node_modules/react-native-background-actions/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin b/node_modules/react-native-background-actions/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin
+new file mode 100644
+index 0000000..2fe0511
+Binary files /dev/null and b/node_modules/react-native-background-actions/android/build/tmp/compileDebugJavaWithJavac/previous-compilation-data.bin differ
+diff --git a/node_modules/react-native-background-actions/android/src/main/AndroidManifest.xml b/node_modules/react-native-background-actions/android/src/main/AndroidManifest.xml
+index b67ef4d..02e2a41 100644
+--- a/node_modules/react-native-background-actions/android/src/main/AndroidManifest.xml
++++ b/node_modules/react-native-background-actions/android/src/main/AndroidManifest.xml
+@@ -1,6 +1,9 @@
+-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.asterinet.react.bgactions">
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.asterinet.react.bgactions">
+     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+     <application>
+-        <service android:name=".RNBackgroundActionsTask"/>
++        <service android:name="com.asterinet.react.bgactions.RNBackgroundActionsTask"
++            android:foregroundServiceType="dataSync" />
+     </application>
+ </manifest>
+\ No newline at end of file
+diff --git a/node_modules/react-native-background-actions/android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java b/node_modules/react-native-background-actions/android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java
+index 315dbd4..9900fc0 100644
+--- a/node_modules/react-native-background-actions/android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java
++++ b/node_modules/react-native-background-actions/android/src/main/java/com/asterinet/react/bgactions/RNBackgroundActionsTask.java
+@@ -41,7 +41,9 @@ final public class RNBackgroundActionsTask extends HeadlessJsTaskService {
+             notificationIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+         }
+         final PendingIntent contentIntent;
+-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
++        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
++            contentIntent = PendingIntent.getActivity(context,0, notificationIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
++        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+             contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_MUTABLE);
+         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+             contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
