@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Device } from "react-native-ble-plx";
+import { Entypo } from '@expo/vector-icons';
 
 type DeviceModalListItemProps = {
   item: ListRenderItemInfo<Device>;
@@ -65,6 +66,9 @@ const DeviceModal: FC<DeviceModalProps> = (props) => {
       visible={visible}
     >
       <SafeAreaView style={modalStyle.modalTitle}>
+        <TouchableOpacity style={modalStyle.backButton} onPress={closeModal}>
+          <Entypo name="arrow-with-circle-left" color="#000000" size={50} />
+        </TouchableOpacity>
         <Text style={modalStyle.modalTitleText}>
           Tap on a device to connect
         </Text>
@@ -119,6 +123,9 @@ const modalStyle = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "white",
+  },
+  backButton: {
+    left: 0,
   },
 });
 
