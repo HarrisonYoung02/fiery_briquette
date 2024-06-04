@@ -44,7 +44,7 @@ export default function Index(): React.ReactNode {
 
   // TODO: Add real check for Celsius once settings are added
   const [monitoredData] = useState({
-    currentTemp: temperature,
+    currentTemp: false ? temperature : temperature * (9 / 5) + 32,
     lowTemp: false ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32,
     highTemp: false ? HIGH_TEMP_DEFAULT : HIGH_TEMP_DEFAULT * (9 / 5) + 32,
     isCelsius: false,
@@ -60,7 +60,9 @@ export default function Index(): React.ReactNode {
   }, []);
 
   useEffect(() => {
-    monitoredData.currentTemp = temperature;
+    monitoredData.currentTemp = monitoredData.isCelsius
+      ? temperature
+      : temperature * (9 / 5) + 32;
   }, [temperature]);
 
   useEffect(() => {
@@ -152,8 +154,8 @@ export default function Index(): React.ReactNode {
 
   const getCurrentTempStr = (): string => {
     if (!monitoredData.deviceConnected) return "Not Connected";
-    if (monitoredData.isCelsius) return `${temperature}\u00b0C`;
-    return `${temperature}\u00b0F`;
+    if (monitoredData.isCelsius) return `${monitoredData.currentTemp}\u00b0C`;
+    return `${monitoredData.currentTemp}\u00b0F`;
   };
 
   return (
@@ -163,7 +165,7 @@ export default function Index(): React.ReactNode {
           <AnimatedTempDial
             lowTemp={monitoredData.lowTemp}
             highTemp={monitoredData.highTemp}
-            currentTemp={temperature}
+            currentTemp={monitoredData.currentTemp}
           />
           <Text style={styles.temperature}>{getCurrentTempStr()}</Text>
           <View style={styles.tempFlagInputHolderRow}>

@@ -7,19 +7,12 @@ BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
-int temperature = 0;
 
-int ThermistorPin = 0;
+int ThermistorPin = A0;
 int Vo;
 float R1 = 10000;
 float logR2, R2, T;
 float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
-
-// For testing
-bool countUp = true;
-int MIN_TEMP = 50;
-int MAX_TEMP = 350;
-int DEFAULT_TEMP = 150;
 
 #define SERVICE_UUID        "7f47e0be-878d-45b9-9bc7-11794a65c5e9"
 #define CHARACTERISTIC_UUID "52fc7e02-ab71-48d9-8cb4-48e5341a83d5"
@@ -66,14 +59,11 @@ void handleDisconnect() {
 
 void handleConnect() {
   oldDeviceConnected = deviceConnected;
-
-  // For testing
-  temperature = DEFAULT_TEMP;
 }
 
 int getTemperature() {
   Vo = analogRead(ThermistorPin);
-  R2 = R1 * (1023.0 / (float)Vo - 1.0);
+  R2 = R1 * (4095.0 / (float)Vo - 1.0);
   logR2 = log(R2);
   T = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2));
   T = T - 273.15;
@@ -82,15 +72,8 @@ int getTemperature() {
 
 void loop() {
   if (deviceConnected) {
-        pCharacteristic->setValue(String(temperature).c_str());
-        // pCharacteristic->setValue(String(getTemperature()).c_str());
+        pCharacteristic->setValue(String(getTemperature()).c_str());
         pCharacteristic->notify();
-
-        // For testing
-        if (countUp) temperature += 10;
-        else temperature -= 10;
-        if (temperature > MAX_TEMP) countUp = false;
-        else if (temperature < MIN_TEMP) countUp = true;
 
         delay(1000); // Prevents bluetooth stack from congesting
     }
