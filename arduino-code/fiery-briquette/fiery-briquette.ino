@@ -62,6 +62,7 @@ void handleConnect() {
 }
 
 int getTemperature() {
+  analogReadResolution(12);
   Vo = analogRead(ThermistorPin);
   return Vo;
   RTherm = RKnown * (4095.0 / (float)Vo - 1.0);

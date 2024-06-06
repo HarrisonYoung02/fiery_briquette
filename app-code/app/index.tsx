@@ -167,10 +167,10 @@ export default function Index(): React.ReactNode {
     // const roundedTemp = monitoredData.currentTemp.toFixed(1);
 
     // For testing
-    const c1 = 2.397488323e-3,
-      c2 = -0.01514706551e-4,
-      c3 = 6.189831727e-7;
-    const RTherm = 100000 * (4095.0 / monitoredData.currentTemp - 1.0);
+    const c1 = 0.7203283552e-3,
+      c2 = 2.171656865e-4,
+      c3 = 0.8706070062e-7;
+    const RTherm = 101100 * (4095.0 / monitoredData.currentTemp - 1.0);
     const logRTherm = Math.log(RTherm);
     let T =
       1.0 / (c1 + c2 * logRTherm + c3 * logRTherm * logRTherm * logRTherm);
