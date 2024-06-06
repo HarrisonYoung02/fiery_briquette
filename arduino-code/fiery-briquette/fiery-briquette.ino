@@ -8,11 +8,11 @@ BLECharacteristic* pCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-int ThermistorPin = A0;
+int ThermistorPin = A1;
 int Vo;
-float R1 = 10000;
-float logR2, R2, T;
-float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
+float RKnown = 100000;
+float logRTherm, RTherm, T;
+float c1 = 2.397488323e-3, c2 = -0.01514706551e-4, c3 = 6.189831727e-7;
 
 #define SERVICE_UUID        "7f47e0be-878d-45b9-9bc7-11794a65c5e9"
 #define CHARACTERISTIC_UUID "52fc7e02-ab71-48d9-8cb4-48e5341a83d5"
@@ -63,9 +63,10 @@ void handleConnect() {
 
 int getTemperature() {
   Vo = analogRead(ThermistorPin);
-  R2 = R1 * (4095.0 / (float)Vo - 1.0);
-  logR2 = log(R2);
-  T = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2));
+  return Vo;
+  RTherm = RKnown * (4095.0 / (float)Vo - 1.0);
+  logRTherm = log(RTherm);
+  T = (1.0 / (c1 + c2*logRTherm + c3*logRTherm*logRTherm*logRTherm));
   T = T - 273.15;
   return T;
 }
@@ -75,7 +76,7 @@ void loop() {
         pCharacteristic->setValue(String(getTemperature()).c_str());
         pCharacteristic->notify();
 
-        delay(1000); // Prevents bluetooth stack from congesting
+        delay(3); // Prevents bluetooth stack from congesting
     }
     
     if (!deviceConnected && oldDeviceConnected) {
