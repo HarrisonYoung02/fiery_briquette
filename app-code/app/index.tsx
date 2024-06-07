@@ -44,13 +44,23 @@ export default function Index(): React.ReactNode {
 
   const sendPushNotification = usePushNotifications();
 
+  interface dataTypes {
+    currentTemp: number;
+    lowTemp: number;
+    highTemp: number;
+    isCelsius: boolean;
+    deviceConnected: boolean;
+    rollingTempList: number[];
+  }
+
   // TODO: Add real check for Celsius once settings are added
-  const [monitoredData] = useState({
+  const [monitoredData] = useState<dataTypes>({
     currentTemp: false ? temperature : temperature * (9 / 5) + 32,
     lowTemp: false ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32,
     highTemp: false ? HIGH_TEMP_DEFAULT : HIGH_TEMP_DEFAULT * (9 / 5) + 32,
     isCelsius: false,
     deviceConnected: false,
+    rollingTempList: [],
   });
 
   useEffect(() => {
@@ -71,7 +81,13 @@ export default function Index(): React.ReactNode {
       setLastTempCheck(now);
 
       // For testing
-      monitoredData.currentTemp = temperature;
+      const newLen = monitoredData.rollingTempList.push(temperature);
+      if (newLen > 5) monitoredData.rollingTempList.shift();
+      monitoredData.currentTemp =
+        monitoredData.rollingTempList.reduce(
+          (total: number, current: number) => (total += current),
+          0
+        ) / monitoredData.rollingTempList.length;
     }
   }, [temperature]);
 
@@ -167,16 +183,21 @@ export default function Index(): React.ReactNode {
     // const roundedTemp = monitoredData.currentTemp.toFixed(1);
 
     // For testing
-    const c1 = 0.7203283552e-3,
-      c2 = 2.171656865e-4,
-      c3 = 0.8706070062e-7;
-    const RTherm = 101100 * (4095.0 / monitoredData.currentTemp - 1.0);
+    const Vi = 3.22;
+    const RKnown = 101100;
+    const A = 1.009249522e-3,
+      B = 2.378405444e-4,
+      C = 2.019202697e-7;
+
+    const Vo = monitoredData.currentTemp * (2.45 / 4095);
+
+    const RTherm = RKnown * (4095 / monitoredData.currentTemp - 1);
     const logRTherm = Math.log(RTherm);
-    let T =
-      1.0 / (c1 + c2 * logRTherm + c3 * logRTherm * logRTherm * logRTherm);
-    T = T - 273.15;
-    T = T * (9 / 5) + 32;
-    const roundedTemp = `${monitoredData.currentTemp}\n${T.toFixed(1)}`;
+    const TK =
+      1.0 / (A + B * logRTherm + C * logRTherm * logRTherm * logRTherm);
+    const TC = TK - 273.15;
+    const TF = TC * (9 / 5) + 32;
+    const roundedTemp = `${monitoredData.currentTemp.toFixed(2)}\n${Vo.toFixed(2)}\n${TF.toFixed(1)}`;
 
     if (monitoredData.isCelsius) return `${roundedTemp}\u00b0C`;
     return `${roundedTemp}\u00b0F`;
