@@ -293,10 +293,7 @@ export default function Index(): React.ReactNode {
             onPress={() => {
               if (tryingConnection) return;
               if (connectedDevice) disconnect();
-              else {
-                setTryingConnection(true);
-                connect();
-              }
+              else connect();
             }}
           >
             <Text style={styles.bluetoothButtonText}>
@@ -312,6 +309,7 @@ export default function Index(): React.ReactNode {
           closeModal={hideModal}
           visible={isModalVisible}
           connectToPeripheral={async (device: Device) => {
+            setTryingConnection(true);
             const success = await connectToDevice(device);
             if (!success)
               Alert.alert(
