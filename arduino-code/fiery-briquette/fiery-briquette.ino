@@ -8,7 +8,7 @@ BLECharacteristic* pCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-int ThermistorPin = A1;
+int ThermistorPin = A0;
 int Vo;
 float RKnown = 100000;
 float logRTherm, RTherm, T;
