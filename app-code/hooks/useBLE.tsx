@@ -18,7 +18,7 @@ interface BluetoothLowEnergyApi {
   requestPermissions(): Promise<boolean>;
   scanForPeripherals(): void;
   allDevices: Device[];
-  connectToDevice: (deviceId: Device) => Promise<void>;
+  connectToDevice: (deviceId: Device) => Promise<boolean>;
   connectedDevice: Device | null;
   temperature: number;
   disconnectFromDevice(): void;
@@ -107,15 +107,17 @@ function useBLE(): BluetoothLowEnergyApi {
       }
     });
 
-  const connectToDevice = async (device: Device) => {
+  const connectToDevice = async (device: Device): Promise<boolean> => {
     try {
       const deviceConnection = await bleManager.connectToDevice(device.id);
       setConnectedDevice(deviceConnection);
       await deviceConnection.discoverAllServicesAndCharacteristics();
       bleManager.stopDeviceScan();
       startStreamingData(deviceConnection);
+      return true;
     } catch (e) {
       console.log("FAILED TO CONNECT", e);
+      return false;
     }
   };
 
