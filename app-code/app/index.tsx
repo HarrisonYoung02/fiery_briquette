@@ -7,8 +7,10 @@ import {
   Image,
   Alert,
 } from "react-native";
+import { Link } from "expo-router";
 import { useState, useEffect } from "react";
 import { Device } from "react-native-ble-plx";
+import { Ionicons } from "@expo/vector-icons";
 import BackgroundService from "react-native-background-actions";
 import DismissKeyboard from "@/components/DismissKeyboard";
 import AnimatedTempDial from "@/components/AnimatedTempDial";
@@ -162,6 +164,11 @@ export default function Index(): React.ReactNode {
     <DismissKeyboard>
       <View style={styles.container}>
         <View style={styles.body}>
+          <Link style={styles.settingsButton} href={"/settings"} asChild>
+            <Pressable>
+              <Ionicons name="settings-outline" color="#000000" size={50} />
+            </Pressable>
+          </Link>
           <AnimatedTempDial
             lowTemp={monitoredData.lowTemp}
             highTemp={monitoredData.highTemp}
@@ -405,5 +412,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "white",
+  },
+  settingsButton: {
+    position: "absolute",
+    right: 20,
+    top: 40,
   },
 });
