@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 import { Device } from "react-native-ble-plx";
 import { Ionicons } from "@expo/vector-icons";
 import BackgroundService from "react-native-background-actions";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import DismissKeyboard from "@/components/DismissKeyboard";
 import AnimatedTempDial from "@/components/AnimatedTempDial";
 import DeviceModal from "@/components/DeviceConnectionModal";
@@ -46,16 +47,79 @@ export default function Index(): React.ReactNode {
 
   const sendPushNotification = usePushNotifications();
 
-  // TODO: Add real check for Celsius once settings are added
   const [monitoredData] = useState({
     currentTemp: temperature,
-    lowTemp: false ? LOW_TEMP_DEFAULT : LOW_TEMP_DEFAULT * (9 / 5) + 32,
-    highTemp: false ? HIGH_TEMP_DEFAULT : HIGH_TEMP_DEFAULT * (9 / 5) + 32,
+    lowTemp: 0,
+    highTemp: 1,
     isCelsius: false,
     deviceConnected: false,
   });
 
   useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const newIsCelsius = await AsyncStorage.getItem("is-celsius");
+        if (newIsCelsius) monitoredData.isCelsius = newIsCelsius === "true";
+        else {
+          monitoredData.isCelsius = true;
+          try {
+            AsyncStorage.setItem("is-celsius", "true");
+          } catch (e) {
+            console.log(
+              "Error saving default settings data (degree type): ",
+              e
+            );
+          }
+        }
+
+        AsyncStorage.getItem("low-temp-default").then((newLow) => {
+          if (newLow) {
+            monitoredData.lowTemp = parseInt(newLow);
+          } else {
+            monitoredData.lowTemp = monitoredData.isCelsius
+              ? LOW_TEMP_DEFAULT
+              : LOW_TEMP_DEFAULT * (9 / 5) + 32;
+            try {
+              AsyncStorage.setItem(
+                "low-temp-default",
+                monitoredData.lowTemp.toString()
+              );
+            } catch (e) {
+              console.log(
+                "Error saving default settings data (low default): ",
+                e
+              );
+            }
+          }
+        });
+
+        AsyncStorage.getItem("high-temp-default").then((newHigh) => {
+          if (newHigh) {
+            monitoredData.highTemp = parseInt(newHigh);
+          } else {
+            monitoredData.highTemp = monitoredData.isCelsius
+              ? HIGH_TEMP_DEFAULT
+              : HIGH_TEMP_DEFAULT * (9 / 5) + 32;
+            try {
+              AsyncStorage.setItem(
+                "high-temp-default",
+                monitoredData.highTemp.toString()
+              );
+            } catch (e) {
+              console.log(
+                "Error saving default settings data (high default): ",
+                e
+              );
+            }
+          }
+        });
+      } catch (e) {
+        console.log("Error reading settings data", e);
+      }
+    };
+
+    loadSettings();
+
     return () => {
       // Just calling stop() isn't enough, b/c task continues running when app is reopened for some reason
       monitoredData.deviceConnected = false;
