@@ -5,6 +5,7 @@ import {
   Pressable,
   TextInput,
   Image,
+  Alert,
 } from "react-native";
 import { useState, useEffect } from "react";
 import { Device } from "react-native-ble-plx";
@@ -32,6 +33,7 @@ export default function Index(): React.ReactNode {
     disconnectFromDevice,
   } = useBLE();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [tryingConnection, setTryingConnection] = useState<boolean>(false);
 
   const LOW_TEMP_STR_DEFAULT = "Set Low";
   const HIGH_TEMP_STR_DEFAULT = "Set High";
@@ -282,17 +284,27 @@ export default function Index(): React.ReactNode {
           <Pressable
             style={[
               styles.bluetoothButton,
-              monitoredData.deviceConnected
-                ? styles.bluetoothButtonDisconnect
-                : styles.bluetoothButtonConnect,
+              tryingConnection
+                ? styles.bluetoothButtonConnecting
+                : connectedDevice
+                  ? styles.bluetoothButtonDisconnect
+                  : styles.bluetoothButtonConnect,
             ]}
             onPress={() => {
-              if (monitoredData.deviceConnected) disconnect();
-              else connect();
+              if (tryingConnection) return;
+              if (connectedDevice) disconnect();
+              else {
+                setTryingConnection(true);
+                connect();
+              }
             }}
           >
             <Text style={styles.bluetoothButtonText}>
-              {monitoredData.deviceConnected ? "Disconnect" : "Connect"}
+              {tryingConnection
+                ? "Connecting..."
+                : connectedDevice
+                  ? "Disconnect"
+                  : "Connect"}
             </Text>
           </Pressable>
         </View>
@@ -300,7 +312,13 @@ export default function Index(): React.ReactNode {
           closeModal={hideModal}
           visible={isModalVisible}
           connectToPeripheral={async (device: Device) => {
-            await connectToDevice(device);
+            const success = await connectToDevice(device);
+            if (!success)
+              Alert.alert(
+                "Connection Failed",
+                "Could not connect to Bluetooth device. Please try again."
+              );
+            setTryingConnection(false);
             await BackgroundService.start(monitorTemps, monitorTempsOptions);
           }}
           devices={allDevices}
@@ -381,6 +399,9 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
   },
   bluetoothButtonDisconnect: { backgroundColor: "red" },
+  bluetoothButtonConnecting: {
+    backgroundColor: "gray",
+  },
   bluetoothButtonText: {
     textAlign: "center",
     fontSize: 20,
