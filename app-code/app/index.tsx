@@ -67,7 +67,7 @@ export default function Index(): React.ReactNode {
     return () => {
       // Just calling stop() isn't enough, b/c task continues running when app is reopened for some reason
       monitoredData.deviceConnected = false;
-      BackgroundService.stop();
+      // BackgroundService.stop();
     };
   }, []);
 
@@ -81,13 +81,15 @@ export default function Index(): React.ReactNode {
       setLastTempCheck(now);
 
       // For testing
-      const newLen = monitoredData.rollingTempList.push(temperature);
-      if (newLen > 5) monitoredData.rollingTempList.shift();
-      monitoredData.currentTemp =
-        monitoredData.rollingTempList.reduce(
-          (total: number, current: number) => (total += current),
-          0
-        ) / monitoredData.rollingTempList.length;
+      // const newLen = monitoredData.rollingTempList.push(temperature);
+      // if (newLen > 5) monitoredData.rollingTempList.shift();
+      // monitoredData.currentTemp =
+      //   monitoredData.rollingTempList.reduce(
+      //     (total: number, current: number) => (total += current),
+      //     0
+      //   ) / monitoredData.rollingTempList.length;
+
+      monitoredData.currentTemp = temperature;
     }
   }, [temperature]);
 
@@ -104,9 +106,9 @@ export default function Index(): React.ReactNode {
       while (monitoredData && monitoredData.deviceConnected) {
         const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
 
-        BackgroundService.updateNotification({
-          taskDesc: getCurrentTempStr(),
-        });
+        // BackgroundService.updateNotification({
+        //   taskDesc: getCurrentTempStr(),
+        // });
 
         if (
           !lowNotifSent &&
@@ -348,7 +350,7 @@ export default function Index(): React.ReactNode {
           visible={isModalVisible}
           connectToPeripheral={async (device: Device) => {
             await connectToDevice(device);
-            await BackgroundService.start(monitorTemps, monitorTempsOptions);
+            // await BackgroundService.start(monitorTemps, monitorTempsOptions);
           }}
           devices={allDevices}
         />
