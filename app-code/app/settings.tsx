@@ -49,78 +49,163 @@ export default function Settings(): React.ReactNode {
 
   return (
     <DismissKeyboard>
-      <View>
+      <View style={styles.container}>
+        <Text style={styles.title}>Settings</Text>
+
+        <View style={[styles.setting, styles.row]}>
+          <View style={styles.cell2}>
+            <View style={[styles.cell1, styles.row]}>
+              <Text style={[styles.settingLabel, styles.cell1]}>
+                Degree type:
+              </Text>
+              <Pressable
+                style={[styles.settingItem, styles.button, styles.cell1]}
+                onPress={() => {
+                  const newIsCelsius = !isCelsius;
+                  setisCelsius(newIsCelsius);
+                  saveData("is-celsius", newIsCelsius ? "true" : "false");
+                }}
+              >
+                <Text style={[styles.centerText]}>
+                  {isCelsius ? `Celsius` : `Fahrenheit`}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+          <Text style={[styles.settingDesc, styles.cell2]}></Text>
+        </View>
+
+        <View style={[styles.setting, styles.row]}>
+          <View style={styles.cell2}>
+            <View style={[styles.cell1, styles.row]}>
+              <Text style={[styles.settingLabel, styles.cell1]}>
+                Default low:
+              </Text>
+              <TextInput
+                style={[
+                  styles.settingItem,
+                  styles.textEntry,
+                  styles.cell1,
+                  styles.centerText,
+                ]}
+                keyboardType="numeric"
+                value={lowDefaultUser}
+                onChangeText={(text) => {
+                  const temp = filterNumInput(text);
+                  setLowDefaultUser(temp);
+                }}
+                onEndEditing={() => {
+                  if (lowDefaultUser === "") {
+                    setLowDefaultUser(lowDefaultBase.toString());
+                  } else {
+                    setLowDefaultBase(parseInt(lowDefaultUser));
+                    saveData("low-temp-default", lowDefaultUser);
+
+                    if (parseInt(lowDefaultUser) >= highDefaultBase) {
+                      const newHigh = parseInt(lowDefaultUser) + 1;
+                      setHighDefaultBase(newHigh);
+                      setHighDefaultUser(newHigh.toString());
+                      saveData("high-temp-default", newHigh.toString());
+                    }
+                  }
+                }}
+              />
+            </View>
+            <View style={[styles.cell1, styles.row]}>
+              <Text style={[styles.settingLabel, styles.cell1]}>
+                Default high:
+              </Text>
+              <TextInput
+                style={[
+                  styles.settingItem,
+                  styles.textEntry,
+                  styles.cell1,
+                  styles.centerText,
+                ]}
+                keyboardType="numeric"
+                value={highDefaultUser}
+                onChangeText={(text) => {
+                  const temp = filterNumInput(text);
+                  setHighDefaultUser(temp);
+                }}
+                onEndEditing={() => {
+                  if (highDefaultUser === "") {
+                    setHighDefaultUser(highDefaultBase.toString());
+                  } else {
+                    setHighDefaultBase(parseInt(highDefaultUser));
+                    saveData("high-temp-default", highDefaultUser);
+
+                    if (parseInt(highDefaultUser) <= lowDefaultBase) {
+                      const newLow = parseInt(highDefaultUser) - 1;
+                      setLowDefaultBase(newLow);
+                      setLowDefaultUser(newLow.toString());
+                      saveData("low-temp-default", newLow.toString());
+                    }
+                  }
+                }}
+              />
+            </View>
+          </View>
+          <Text style={[styles.settingDesc, styles.cell2]}>
+            The default temperature warning thresholds when not set.
+          </Text>
+        </View>
+
         <Link style={styles.backButton} href={"/"} asChild>
           <Pressable>
             <Entypo name="arrow-with-circle-left" color="#000000" size={50} />
           </Pressable>
         </Link>
-        <Text>
-          These temperatures are what the high and low temperature warnings
-          default to when not otherwise set.
-        </Text>
-        <View style={styles.dataRow}>
-          <Text>Default low: </Text>
-          <TextInput
-            // style={}
-            keyboardType="numeric"
-            value={lowDefaultUser}
-            onChangeText={(text) => {
-              const temp = filterNumInput(text);
-              setLowDefaultUser(temp);
-            }}
-            onEndEditing={() => {
-              if (lowDefaultUser === "") {
-                setLowDefaultUser(lowDefaultBase.toString());
-              } else {
-                setLowDefaultBase(parseInt(lowDefaultUser));
-                saveData("low-temp-default", lowDefaultUser);
-              }
-            }}
-          />
-        </View>
-        <View style={styles.dataRow}>
-          <Text>Default high:</Text>
-          <TextInput
-            // style={}
-            keyboardType="numeric"
-            value={highDefaultUser}
-            onChangeText={(text) => {
-              const temp = filterNumInput(text);
-              setHighDefaultUser(temp);
-            }}
-            onEndEditing={() => {
-              if (highDefaultUser === "") {
-                setHighDefaultUser(highDefaultBase.toString());
-              } else {
-                setHighDefaultBase(parseInt(highDefaultUser));
-                saveData("high-temp-default", highDefaultUser);
-              }
-            }}
-          />
-        </View>
-        <View style={styles.dataRow}>
-          <Text>Degree type: </Text>
-          <Pressable
-            onPress={() => {
-              const newIsCelsius = !isCelsius;
-              setisCelsius(newIsCelsius);
-              saveData("is-celsius", newIsCelsius ? "true" : "false");
-            }}
-          >
-            <Text>{isCelsius ? `Celsius` : `Fahrenheit`}</Text>
-          </Pressable>
-        </View>
       </View>
     </DismissKeyboard>
   );
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    padding: 10,
+  container: {
+    flex: 1,
   },
-  dataRow: {
+  backButton: {
+    position: "absolute",
+    left: 20,
+    top: 20,
+  },
+  title: {
+    fontWeight: "bold",
+    fontSize: 50,
+    textAlign: "center",
+    margin: 20,
+  },
+  cell1: { flex: 1 },
+  cell2: { flex: 2 },
+  row: {
     flexDirection: "row",
+    alignItems: "center",
+    height: 100,
+  },
+  setting: {
+    margin: 5,
+  },
+  settingLabel: {
+    fontWeight: "bold",
+    margin: 5,
+  },
+  settingItem: {
+    margin: 5,
+  },
+  settingDesc: {
+    fontStyle: "italic",
+    margin: 5,
+  },
+  button: {
+    padding: 5,
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 10,
+    backgroundColor: "lightgray",
+  },
+  textEntry: { borderBottomColor: "black", borderBottomWidth: 1 },
+  centerText: {
+    textAlign: "center",
   },
 });

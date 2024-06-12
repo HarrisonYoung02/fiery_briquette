@@ -8,9 +8,10 @@ import {
   Alert,
 } from "react-native";
 import { Link } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Device } from "react-native-ble-plx";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import BackgroundService from "react-native-background-actions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DismissKeyboard from "@/components/DismissKeyboard";
@@ -40,10 +41,11 @@ export default function Index(): React.ReactNode {
 
   const LOW_TEMP_STR_DEFAULT = "Set Low";
   const HIGH_TEMP_STR_DEFAULT = "Set High";
-  const LOW_TEMP_DEFAULT = 40; // Defaults in Celsius
-  const HIGH_TEMP_DEFAULT = 150;
   const [lowTempStr, setLowTempStr] = useState<string>(LOW_TEMP_STR_DEFAULT);
   const [highTempStr, setHighTempStr] = useState<string>(HIGH_TEMP_STR_DEFAULT);
+
+  const [lowTempDefault, setLowTempDefault] = useState<number>(0);
+  const [highTempDefault, setHighTempDefault] = useState<number>(1);
 
   const sendPushNotification = usePushNotifications();
 
@@ -56,76 +58,79 @@ export default function Index(): React.ReactNode {
   });
 
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const newIsCelsius = await AsyncStorage.getItem("is-celsius");
-        if (newIsCelsius) monitoredData.isCelsius = newIsCelsius === "true";
-        else {
-          monitoredData.isCelsius = true;
-          try {
-            AsyncStorage.setItem("is-celsius", "true");
-          } catch (e) {
-            console.log(
-              "Error saving default settings data (degree type): ",
-              e
-            );
-          }
-        }
-
-        AsyncStorage.getItem("low-temp-default").then((newLow) => {
-          if (newLow) {
-            monitoredData.lowTemp = parseInt(newLow);
-          } else {
-            monitoredData.lowTemp = monitoredData.isCelsius
-              ? LOW_TEMP_DEFAULT
-              : LOW_TEMP_DEFAULT * (9 / 5) + 32;
-            try {
-              AsyncStorage.setItem(
-                "low-temp-default",
-                monitoredData.lowTemp.toString()
-              );
-            } catch (e) {
-              console.log(
-                "Error saving default settings data (low default): ",
-                e
-              );
-            }
-          }
-        });
-
-        AsyncStorage.getItem("high-temp-default").then((newHigh) => {
-          if (newHigh) {
-            monitoredData.highTemp = parseInt(newHigh);
-          } else {
-            monitoredData.highTemp = monitoredData.isCelsius
-              ? HIGH_TEMP_DEFAULT
-              : HIGH_TEMP_DEFAULT * (9 / 5) + 32;
-            try {
-              AsyncStorage.setItem(
-                "high-temp-default",
-                monitoredData.highTemp.toString()
-              );
-            } catch (e) {
-              console.log(
-                "Error saving default settings data (high default): ",
-                e
-              );
-            }
-          }
-        });
-      } catch (e) {
-        console.log("Error reading settings data", e);
-      }
-    };
-
-    loadSettings();
-
     return () => {
       // Just calling stop() isn't enough, b/c task continues running when app is reopened for some reason
       monitoredData.deviceConnected = false;
       BackgroundService.stop();
     };
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadSettings = async () => {
+        try {
+          const newIsCelsius = await AsyncStorage.getItem("is-celsius");
+          if (newIsCelsius) monitoredData.isCelsius = newIsCelsius === "true";
+          else {
+            monitoredData.isCelsius = true;
+            try {
+              AsyncStorage.setItem("is-celsius", "true");
+            } catch (e) {
+              console.log(
+                "Error saving default settings data (degree type): ",
+                e
+              );
+            }
+          }
+
+          AsyncStorage.getItem("low-temp-default").then((newLow) => {
+            if (newLow) {
+              monitoredData.lowTemp = parseInt(newLow);
+            } else {
+              monitoredData.lowTemp = monitoredData.isCelsius ? 40 : 100;
+              try {
+                AsyncStorage.setItem(
+                  "low-temp-default",
+                  monitoredData.lowTemp.toString()
+                );
+              } catch (e) {
+                console.log(
+                  "Error saving default settings data (low default): ",
+                  e
+                );
+              }
+            }
+            monitoredData.highTemp = monitoredData.lowTemp + 1; // Needed to prevent temp dial from trying to render w/ invalid range
+            setLowTempDefault(monitoredData.lowTemp);
+          });
+
+          AsyncStorage.getItem("high-temp-default").then((newHigh) => {
+            if (newHigh) {
+              monitoredData.highTemp = parseInt(newHigh);
+            } else {
+              monitoredData.highTemp = monitoredData.isCelsius ? 150 : 300;
+              try {
+                AsyncStorage.setItem(
+                  "high-temp-default",
+                  monitoredData.highTemp.toString()
+                );
+              } catch (e) {
+                console.log(
+                  "Error saving default settings data (high default): ",
+                  e
+                );
+              }
+            }
+            setHighTempDefault(monitoredData.highTemp);
+          });
+        } catch (e) {
+          console.log("Error reading settings data", e);
+        }
+      };
+
+      loadSettings();
+    }, [])
+  );
 
   useEffect(() => {
     monitoredData.currentTemp = temperature;
@@ -236,7 +241,11 @@ export default function Index(): React.ReactNode {
           <AnimatedTempDial
             lowTemp={monitoredData.lowTemp}
             highTemp={monitoredData.highTemp}
-            currentTemp={temperature}
+            currentTemp={
+              connectedDevice
+                ? temperature
+                : (monitoredData.lowTemp + monitoredData.highTemp) / 2
+            }
           />
           <Text style={styles.temperature}>{getCurrentTempStr()}</Text>
           <View style={styles.tempFlagInputHolderRow}>
@@ -267,16 +276,12 @@ export default function Index(): React.ReactNode {
               ></TextInput>
               <Pressable
                 onPress={() => {
-                  const lowDefault = monitoredData.isCelsius
-                    ? LOW_TEMP_DEFAULT
-                    : LOW_TEMP_DEFAULT * (9 / 5) + 32;
-
-                  if (lowDefault >= monitoredData.highTemp) {
-                    setHighTempStr(`${lowDefault + 1}`);
-                    monitoredData.highTemp = lowDefault + 1;
+                  if (lowTempDefault >= monitoredData.highTemp) {
+                    setHighTempStr(`${lowTempDefault + 1}`);
+                    monitoredData.highTemp = lowTempDefault + 1;
                   }
                   setLowTempStr(LOW_TEMP_STR_DEFAULT);
-                  monitoredData.lowTemp = lowDefault;
+                  monitoredData.lowTemp = lowTempDefault;
                 }}
               >
                 <Image
@@ -317,16 +322,12 @@ export default function Index(): React.ReactNode {
               ></TextInput>
               <Pressable
                 onPress={() => {
-                  const highDefault = monitoredData.isCelsius
-                    ? HIGH_TEMP_DEFAULT
-                    : HIGH_TEMP_DEFAULT * (9 / 5) + 32;
-
-                  if (highDefault <= monitoredData.lowTemp) {
-                    setLowTempStr(`${highDefault - 1}`);
-                    monitoredData.lowTemp = highDefault - 1;
+                  if (highTempDefault <= monitoredData.lowTemp) {
+                    setLowTempStr(`${highTempDefault - 1}`);
+                    monitoredData.lowTemp = highTempDefault - 1;
                   }
                   setHighTempStr(HIGH_TEMP_STR_DEFAULT);
-                  monitoredData.highTemp = highDefault;
+                  monitoredData.highTemp = highTempDefault;
                 }}
               >
                 <Image
