@@ -83,46 +83,44 @@ export default function Index(): React.ReactNode {
             }
           }
 
-          AsyncStorage.getItem("low-temp-default").then((newLow) => {
-            if (newLow) {
-              monitoredData.lowTemp = parseInt(newLow);
-            } else {
-              monitoredData.lowTemp = monitoredData.isCelsius ? 40 : 100;
-              try {
-                AsyncStorage.setItem(
-                  "low-temp-default",
-                  monitoredData.lowTemp.toString()
-                );
-              } catch (e) {
-                console.log(
-                  "Error saving default settings data (low default): ",
-                  e
-                );
-              }
+          const newLow = await AsyncStorage.getItem("low-temp-default");
+          if (newLow) {
+            monitoredData.lowTemp = parseInt(newLow);
+          } else {
+            monitoredData.lowTemp = monitoredData.isCelsius ? 40 : 100;
+            try {
+              AsyncStorage.setItem(
+                "low-temp-default",
+                monitoredData.lowTemp.toString()
+              );
+            } catch (e) {
+              console.log(
+                "Error saving default settings data (low default): ",
+                e
+              );
             }
-            monitoredData.highTemp = monitoredData.lowTemp + 1; // Needed to prevent temp dial from trying to render w/ invalid range
-            setLowTempDefault(monitoredData.lowTemp);
-          });
+          }
+          monitoredData.highTemp = monitoredData.lowTemp + 1; // Needed to prevent temp dial from trying to render w/ invalid range
+          setLowTempDefault(monitoredData.lowTemp);
 
-          AsyncStorage.getItem("high-temp-default").then((newHigh) => {
-            if (newHigh) {
-              monitoredData.highTemp = parseInt(newHigh);
-            } else {
-              monitoredData.highTemp = monitoredData.isCelsius ? 150 : 300;
-              try {
-                AsyncStorage.setItem(
-                  "high-temp-default",
-                  monitoredData.highTemp.toString()
-                );
-              } catch (e) {
-                console.log(
-                  "Error saving default settings data (high default): ",
-                  e
-                );
-              }
+          const newHigh = await AsyncStorage.getItem("high-temp-default");
+          if (newHigh) {
+            monitoredData.highTemp = parseInt(newHigh);
+          } else {
+            monitoredData.highTemp = monitoredData.isCelsius ? 150 : 300;
+            try {
+              AsyncStorage.setItem(
+                "high-temp-default",
+                monitoredData.highTemp.toString()
+              );
+            } catch (e) {
+              console.log(
+                "Error saving default settings data (high default): ",
+                e
+              );
             }
-            setHighTempDefault(monitoredData.highTemp);
-          });
+          }
+          setHighTempDefault(monitoredData.highTemp);
         } catch (e) {
           console.log("Error reading settings data", e);
         }
