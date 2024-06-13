@@ -67,7 +67,7 @@ export default function Index(): React.ReactNode {
     return () => {
       // Just calling stop() isn't enough, b/c task continues running when app is reopened for some reason
       monitoredData.deviceConnected = false;
-      // BackgroundService.stop();
+      BackgroundService.stop();
     };
   }, []);
 
@@ -98,9 +98,9 @@ export default function Index(): React.ReactNode {
       while (monitoredData && monitoredData.deviceConnected) {
         const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
 
-        // BackgroundService.updateNotification({
-        //   taskDesc: getCurrentTempStr(),
-        // });
+        BackgroundService.updateNotification({
+          taskDesc: getCurrentTempStr(),
+        });
 
         if (
           !lowNotifSent &&
@@ -339,7 +339,7 @@ export default function Index(): React.ReactNode {
                 "Could not connect to Bluetooth device. Please try again."
               );
             setTryingConnection(false);
-            // await BackgroundService.start(monitorTemps, monitorTempsOptions);
+            await BackgroundService.start(monitorTemps, monitorTempsOptions);
           }}
           devices={allDevices}
         />
