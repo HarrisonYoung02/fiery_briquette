@@ -1,5 +1,5 @@
 import { StyleSheet, View, Text, Pressable, TextInput } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { Entypo } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -14,6 +14,8 @@ export default function Settings(): React.ReactNode {
   const [lowDefaultUser, setLowDefaultUser] = useState<string>("");
   const [highDefaultUser, setHighDefaultUser] = useState<string>("");
   const [isCelsius, setisCelsius] = useState<boolean>(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     try {
@@ -44,6 +46,17 @@ export default function Settings(): React.ReactNode {
       AsyncStorage.setItem(itemName, newVal);
     } catch (e) {
       console.log(`Error saving settings data (${itemName}): `, e);
+    }
+  };
+
+  const clearData = async () => {
+    try {
+      await AsyncStorage.removeItem("low-temp-default");
+      await AsyncStorage.removeItem("high-temp-default");
+      await AsyncStorage.removeItem("is-celsius");
+      router.back();
+    } catch (e) {
+      console.log("Error removing settings data: ", e);
     }
   };
 
@@ -156,6 +169,10 @@ export default function Settings(): React.ReactNode {
             <Entypo name="arrow-with-circle-left" color="#000000" size={50} />
           </Pressable>
         </Link>
+
+        <Pressable style={styles.clearButton} onPress={clearData}>
+          <Text style={styles.clearButtonText}>Clear data</Text>
+        </Pressable>
       </View>
     </DismissKeyboard>
   );
@@ -170,11 +187,22 @@ const styles = StyleSheet.create({
     left: 20,
     top: 20,
   },
+  clearButton: {
+    position: "absolute",
+    right: 20,
+    top: 20,
+    borderColor: "black",
+    borderWidth: 2,
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: "pink",
+  },
+  clearButtonText: { fontWeight: "bold" },
   title: {
     fontWeight: "bold",
-    fontSize: 50,
+    fontSize: 40,
     textAlign: "center",
-    margin: 20,
+    marginTop: 30,
   },
   cell1: { flex: 1 },
   cell2: { flex: 2 },
