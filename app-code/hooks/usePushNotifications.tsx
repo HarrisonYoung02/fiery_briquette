@@ -12,7 +12,6 @@ export const usePushNotifications = (): Function => {
     }),
   });
 
-  const notificationListener = useRef<Notifications.Subscription>();
   const responseListener = useRef<Notifications.Subscription>();
 
   async function sendPushNotification(title: string, body: string) {
@@ -59,9 +58,6 @@ export const usePushNotifications = (): Function => {
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener(() => {});
     return () => {
-      Notifications.removeNotificationSubscription(
-        notificationListener.current!
-      );
       Notifications.removeNotificationSubscription(responseListener.current!);
     };
   }, []);
