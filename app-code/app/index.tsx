@@ -224,7 +224,7 @@ export default function Index(): React.ReactNode {
   };
 
   const getCurrentTempStr = (): string => {
-    if (!monitoredData.deviceConnected) return "Not Connected";
+    if (!connectedDevice) return "Not Connected";
     if (monitoredData.isCelsius) return `${temperature}\u00b0C`;
     return `${temperature}\u00b0F`;
   };
@@ -247,7 +247,16 @@ export default function Index(): React.ReactNode {
                 : (monitoredData.lowTemp + monitoredData.highTemp) / 2
             }
           />
-          <Text style={styles.temperature}>{getCurrentTempStr()}</Text>
+          <View style={styles.temperatureHolder}>
+            <Text
+              style={[
+                styles.temperature,
+                connectedDevice ? null : styles.temperatureNotConnected,
+              ]}
+            >
+              {getCurrentTempStr()}
+            </Text>
+          </View>
           <View style={styles.tempFlagInputHolderRow}>
             <View style={styles.tempFlagInputHolderCol}>
               <TextInput
@@ -413,10 +422,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
   },
+  temperatureHolder: {
+    alignItems: "center",
+  },
   temperature: {
     top: -50,
     fontSize: 50,
     textAlign: "center",
+    width: 325,
+  },
+  temperatureNotConnected: {
+    fontSize: 45,
   },
   tempFlagInputHolderRow: {
     flexDirection: "row",
