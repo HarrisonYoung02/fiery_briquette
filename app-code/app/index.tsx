@@ -49,12 +49,23 @@ export default function Index(): React.ReactNode {
 
   const sendPushNotification = usePushNotifications();
 
-  const [monitoredData] = useState({
+  interface dataTypes {
+    currentTemp: number;
+    lowTemp: number;
+    highTemp: number;
+    isCelsius: boolean;
+    deviceConnected: boolean;
+    rollingTempList: number[];
+  }
+
+  // TODO: Add real check for Celsius once settings are added
+  const [monitoredData] = useState<dataTypes>({
     currentTemp: temperature,
     lowTemp: 0,
     highTemp: 1,
-    isCelsius: false,
+    isCelsius: true,
     deviceConnected: false,
+    rollingTempList: [],
   });
 
   useEffect(() => {
@@ -133,7 +144,17 @@ export default function Index(): React.ReactNode {
   );
 
   useEffect(() => {
-    monitoredData.currentTemp = temperature;
+    const newLen = monitoredData.rollingTempList.push(temperature);
+    if (newLen > 10) monitoredData.rollingTempList.shift();
+    monitoredData.currentTemp =
+      monitoredData.rollingTempList.reduce(
+        (total: number, current: number) => (total += current),
+        0
+      ) / monitoredData.rollingTempList.length;
+
+    if (!monitoredData.isCelsius) {
+      monitoredData.currentTemp = monitoredData.currentTemp * (9 / 5) + 32;
+    }
   }, [temperature]);
 
   useEffect(() => {
@@ -150,7 +171,7 @@ export default function Index(): React.ReactNode {
         const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
 
         BackgroundService.updateNotification({
-          taskDesc: monitoredData.currentTemp + degreeType,
+          taskDesc: getCurrentTempStr(),
         });
 
         if (
@@ -225,8 +246,10 @@ export default function Index(): React.ReactNode {
 
   const getCurrentTempStr = (): string => {
     if (!monitoredData.deviceConnected) return "Not Connected";
-    if (monitoredData.isCelsius) return `${temperature}\u00b0C`;
-    return `${temperature}\u00b0F`;
+
+    const roundedTemp = monitoredData.currentTemp.toFixed(1);
+    if (monitoredData.isCelsius) return `${roundedTemp}\u00b0C`;
+    return `${roundedTemp}\u00b0F`;
   };
 
   return (
@@ -243,7 +266,7 @@ export default function Index(): React.ReactNode {
             highTemp={monitoredData.highTemp}
             currentTemp={
               connectedDevice
-                ? temperature
+                ? monitoredData.currentTemp
                 : (monitoredData.lowTemp + monitoredData.highTemp) / 2
             }
           />
