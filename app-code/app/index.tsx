@@ -63,7 +63,7 @@ export default function Index(): React.ReactNode {
     currentTemp: temperature,
     lowTemp: 0,
     highTemp: 1,
-    isCelsius: false,
+    isCelsius: true,
     deviceConnected: false,
     rollingTempList: [],
   });
@@ -266,7 +266,7 @@ export default function Index(): React.ReactNode {
             highTemp={monitoredData.highTemp}
             currentTemp={
               connectedDevice
-                ? temperature
+                ? monitoredData.currentTemp
                 : (monitoredData.lowTemp + monitoredData.highTemp) / 2
             }
           />
