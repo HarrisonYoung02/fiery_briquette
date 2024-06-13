@@ -70,8 +70,10 @@ export default function Index(): React.ReactNode {
       const loadSettings = async () => {
         try {
           const newIsCelsius = await AsyncStorage.getItem("is-celsius");
-          if (newIsCelsius) monitoredData.isCelsius = newIsCelsius === "true";
-          else {
+          // AsyncStorage stores strings only
+          if (newIsCelsius) {
+            monitoredData.isCelsius = newIsCelsius === "true";
+          } else {
             monitoredData.isCelsius = true;
             try {
               AsyncStorage.setItem("is-celsius", "true");
