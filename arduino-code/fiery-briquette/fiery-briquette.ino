@@ -1,16 +1,13 @@
 #include <ArduinoBLE.h>
 
-#define SERVICE_UUID        "7f47e0be-878d-45b9-9bc7-11794a65c5e9"
-#define CHARACTERISTIC_UUID "52fc7e02-ab71-48d9-8cb4-48e5341a83d5"
-
-BLEService temperatureService(SERVICE_UUID);
-BLEStringCharacteristic temperatureCharacteristic(CHARACTERISTIC_UUID, BLENotify | BLERead, 3);
+BLEService temperatureService("7f47e0be-878d-45b9-9bc7-11794a65c5e9");
+BLEStringCharacteristic temperatureCharacteristic("52fc7e02-ab71-48d9-8cb4-48e5341a83d5", BLENotify | BLERead, 7);
 
 int ThermistorPin = A0;
 int Vo;
-float RKnown = 100000;
+float RKnown = 98500;
 float logRTherm, RTherm, T;
-float c1 = 2.397488323e-3, c2 = -0.01514706551e-4, c3 = 6.189831727e-7;
+float c1 = 0.7429767295319737e-3, c2 = 2.1170687252114286e-4, c3 = 1.1425980418839938e-7;
 
 void setup() {
   analogReadResolution(14);
@@ -33,8 +30,7 @@ void setup() {
 
 int getTemperature() {
   Vo = analogRead(ThermistorPin);
-  return Vo;
-  RTherm = RKnown * (4095.0 / (float)Vo - 1.0);
+  RTherm = RKnown * (16383.0 / (float)Vo - 1.0);
   logRTherm = log(RTherm);
   T = (1.0 / (c1 + c2*logRTherm + c3*logRTherm*logRTherm*logRTherm));
   T = T - 273.15;
@@ -47,7 +43,6 @@ void loop() {
   if (central) {
     while (central.connected()) {
       temperatureCharacteristic.writeValue(String(getTemperature()));
-
       delay(1000); // Prevents bluetooth stack from congesting
     }
 

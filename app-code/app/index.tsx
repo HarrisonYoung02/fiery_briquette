@@ -42,8 +42,6 @@ export default function Index(): React.ReactNode {
   const [lowTempStr, setLowTempStr] = useState<string>(LOW_TEMP_STR_DEFAULT);
   const [highTempStr, setHighTempStr] = useState<string>(HIGH_TEMP_STR_DEFAULT);
 
-  const [lastTempCheck, setLastTempCheck] = useState<number>(Date.now() - 500);
-
   const sendPushNotification = usePushNotifications();
 
   interface dataTypes {
@@ -74,24 +72,16 @@ export default function Index(): React.ReactNode {
   }, []);
 
   useEffect(() => {
-    // Arduino updates temp every 3ms - higher values make output completely wrong for some reason - but 3ms too fast to display onscreen w/o flickering
-    const now = Date.now();
-    if (now - lastTempCheck >= 500) {
-      monitoredData.currentTemp = monitoredData.isCelsius
-        ? temperature
-        : temperature * (9 / 5) + 32;
-      setLastTempCheck(now);
+    const newLen = monitoredData.rollingTempList.push(temperature);
+    if (newLen > 10) monitoredData.rollingTempList.shift();
+    monitoredData.currentTemp =
+      monitoredData.rollingTempList.reduce(
+        (total: number, current: number) => (total += current),
+        0
+      ) / monitoredData.rollingTempList.length;
 
-      // For testing
-      // const newLen = monitoredData.rollingTempList.push(temperature);
-      // if (newLen > 5) monitoredData.rollingTempList.shift();
-      // monitoredData.currentTemp =
-      //   monitoredData.rollingTempList.reduce(
-      //     (total: number, current: number) => (total += current),
-      //     0
-      //   ) / monitoredData.rollingTempList.length;
-
-      monitoredData.currentTemp = temperature;
+    if (!monitoredData.isCelsius) {
+      monitoredData.currentTemp = monitoredData.currentTemp * (9 / 5) + 32;
     }
   }, [temperature]);
 
@@ -184,25 +174,8 @@ export default function Index(): React.ReactNode {
 
   const getCurrentTempStr = (): string => {
     if (!monitoredData.deviceConnected) return "Not Connected";
-    // const roundedTemp = monitoredData.currentTemp.toFixed(1);
 
-    // For testing
-    const Vi = 3.22;
-    const RKnown = 101100;
-    const A = 1.009249522e-3,
-      B = 2.378405444e-4,
-      C = 2.019202697e-7;
-
-    const Vo = monitoredData.currentTemp * (2.45 / 4095);
-
-    const RTherm = RKnown * (4095 / monitoredData.currentTemp - 1);
-    const logRTherm = Math.log(RTherm);
-    const TK =
-      1.0 / (A + B * logRTherm + C * logRTherm * logRTherm * logRTherm);
-    const TC = TK - 273.15;
-    const TF = TC * (9 / 5) + 32;
-    const roundedTemp = `${monitoredData.currentTemp.toFixed(2)}\n${Vo.toFixed(2)}\n${TF.toFixed(1)}`;
-
+    const roundedTemp = monitoredData.currentTemp.toFixed(1);
     if (monitoredData.isCelsius) return `${roundedTemp}\u00b0C`;
     return `${roundedTemp}\u00b0F`;
   };
