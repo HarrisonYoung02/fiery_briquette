@@ -245,7 +245,6 @@ export default function Index(): React.ReactNode {
   };
 
   const getCurrentTempStr = (): string => {
-
     if (!connectedDevice) return "Not Connected";
     const roundedTemp = monitoredData.currentTemp.toFixed(1);
     if (monitoredData.isCelsius) return `${roundedTemp}\u00b0C`;

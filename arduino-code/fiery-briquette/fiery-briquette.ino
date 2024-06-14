@@ -28,7 +28,7 @@ void setup() {
   BLE.advertise();
 }
 
-int getTemperature() {
+float getTemperature() {
   Vo = analogRead(ThermistorPin);
   RTherm = RKnown * (16383.0 / (float)Vo - 1.0);
   logRTherm = log(RTherm);
