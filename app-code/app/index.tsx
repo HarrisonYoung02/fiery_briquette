@@ -144,13 +144,15 @@ export default function Index(): React.ReactNode {
   );
 
   useEffect(() => {
-    const newLen = monitoredData.rollingTempList.push(temperature);
-    if (newLen > 10) monitoredData.rollingTempList.shift();
-    monitoredData.currentTemp =
-      monitoredData.rollingTempList.reduce(
-        (total: number, current: number) => (total += current),
-        0
-      ) / monitoredData.rollingTempList.length;
+    // const newLen = monitoredData.rollingTempList.push(temperature);
+    // if (newLen > 10) monitoredData.rollingTempList.shift();
+    // monitoredData.currentTemp =
+    //   monitoredData.rollingTempList.reduce(
+    //     (total: number, current: number) => (total += current),
+    //     0
+    //   ) / monitoredData.rollingTempList.length;
+
+    monitoredData.currentTemp = temperature;
 
     if (!monitoredData.isCelsius) {
       monitoredData.currentTemp = monitoredData.currentTemp * (9 / 5) + 32;
@@ -171,7 +173,7 @@ export default function Index(): React.ReactNode {
         const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
 
         BackgroundService.updateNotification({
-          taskDesc: getCurrentTempStr(),
+          taskDesc: `${monitoredData.currentTemp.toFixed(1)}${degreeType}`,
         });
 
         if (
