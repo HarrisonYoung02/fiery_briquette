@@ -36,7 +36,7 @@ void setup() {
   BLE.advertise();
 }
 
-int getTemperature() {
+float getTemperature() {
   adc0 = ads.readADC_SingleEnded(ThermistorPin);
   volts0 = ads.computeVolts(adc0);
   RTherm = RKnown * (MAX_VOLTS / volts0 - 1.0);

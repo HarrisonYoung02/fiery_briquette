@@ -142,7 +142,7 @@ function useBLE(): BluetoothLowEnergyApi {
     }
 
     const rawData = base64.decode(characteristic.value);
-    setTemperature(parseInt(rawData));
+    setTemperature(parseFloat(rawData));
   };
 
   const startStreamingData = async (device: Device) => {
