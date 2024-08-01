@@ -25,7 +25,7 @@
     android:allowBackup="true" android:theme="@style/AppTheme">
     <meta-data
       android:name="expo.modules.notifications.default_notification_icon"
-      android:resource="@mipmap/ic_launcher" />
+      android:resource="@drawable/notification_icon" />
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false" />
     <meta-data android:name="expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH"
       android:value="ALWAYS" />
