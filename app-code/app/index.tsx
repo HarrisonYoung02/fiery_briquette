@@ -154,7 +154,6 @@ export default function Index(): React.ReactNode {
     else monitoredData.deviceConnected = false;
   }, [connectedDevice]);
 
-  // TODO: Add icon to notifications
   const monitorTemps = async () => {
     await new Promise(async () => {
       let lowNotifSent = false,
