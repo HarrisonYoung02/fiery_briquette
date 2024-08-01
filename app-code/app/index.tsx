@@ -55,17 +55,15 @@ export default function Index(): React.ReactNode {
     highTemp: number;
     isCelsius: boolean;
     deviceConnected: boolean;
-    rollingTempList: number[];
   }
 
-  // TODO: Add real check for Celsius once settings are added
+  // Needs to be useState w/o setter to allow accessing/updating properly from background task
   const [monitoredData] = useState<dataTypes>({
     currentTemp: temperature,
     lowTemp: 0,
     highTemp: 1,
     isCelsius: true,
     deviceConnected: false,
-    rollingTempList: [],
   });
 
   useEffect(() => {
@@ -144,13 +142,7 @@ export default function Index(): React.ReactNode {
   );
 
   useEffect(() => {
-    const newLen = monitoredData.rollingTempList.push(temperature);
-    if (newLen > 10) monitoredData.rollingTempList.shift();
-    monitoredData.currentTemp =
-      monitoredData.rollingTempList.reduce(
-        (total: number, current: number) => (total += current),
-        0
-      ) / monitoredData.rollingTempList.length;
+    monitoredData.currentTemp = temperature;
 
     if (!monitoredData.isCelsius) {
       monitoredData.currentTemp = monitoredData.currentTemp * (9 / 5) + 32;
@@ -162,7 +154,6 @@ export default function Index(): React.ReactNode {
     else monitoredData.deviceConnected = false;
   }, [connectedDevice]);
 
-  // TODO: Add icon to notifications
   const monitorTemps = async () => {
     await new Promise(async () => {
       let lowNotifSent = false,
@@ -171,7 +162,7 @@ export default function Index(): React.ReactNode {
         const degreeType = monitoredData.isCelsius ? `\u00b0C` : `\u00b0F`;
 
         BackgroundService.updateNotification({
-          taskDesc: getCurrentTempStr(),
+          taskDesc: `${monitoredData.currentTemp.toFixed(1)}${degreeType}`,
         });
 
         if (
@@ -213,8 +204,8 @@ export default function Index(): React.ReactNode {
     taskTitle: "Temperature",
     taskDesc: "Waiting for reading",
     taskIcon: {
-      name: "ic_launcher",
-      type: "mipmap",
+      name: "notification_icon",
+      type: "drawable",
     },
     color: "#ff00ff",
     linkingURI: "fiery-briquette://",
