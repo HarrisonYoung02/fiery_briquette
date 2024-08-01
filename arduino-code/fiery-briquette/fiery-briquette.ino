@@ -13,7 +13,7 @@ int16_t adc0;
 float RKnown = 98500;
 float logRTherm, RTherm, T;
 float c1 = 0.0007429767295319737, c2 = 0.00021170687252114286, c3 = 0.00000011425980418839938;
-float MAX_VOLTS = 4.59;
+float MAX_VOLTS = 5.04;
 
 
 void setup() {
@@ -43,13 +43,8 @@ float getTemperature() {
   logRTherm = log(RTherm);
   T = (1.0 / (c1 + c2*logRTherm + c3*logRTherm*logRTherm*logRTherm));
   T = T - 273.15;
-  Serial.print("volts: ");  Serial.println(volts0, 10);
-  Serial.print("RTherm: "); Serial.println(RKnown * (MAX_VOLTS / volts0 - 1.0));
-  Serial.print("logRTherm: "); Serial.println(log(RTherm));
-  Serial.print("T1: "); Serial.println((1.0 / (c1 + c2*logRTherm + c3*logRTherm*logRTherm*logRTherm)), 10);
-  Serial.print("T2: "); Serial.println((1.0 / (c1 + c2*logRTherm + c3*logRTherm*logRTherm*logRTherm))-273.15);
-  // Serial.println(adc0);
 
+  if (isnan(T)) return 0;
   return T;
 }
 
