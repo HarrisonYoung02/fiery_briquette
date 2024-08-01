@@ -55,17 +55,15 @@ export default function Index(): React.ReactNode {
     highTemp: number;
     isCelsius: boolean;
     deviceConnected: boolean;
-    rollingTempList: number[];
   }
 
-  // TODO: Add real check for Celsius once settings are added
+  // Needs to be useState w/o setter to allow accessing/updating properly from background task
   const [monitoredData] = useState<dataTypes>({
     currentTemp: temperature,
     lowTemp: 0,
     highTemp: 1,
     isCelsius: true,
     deviceConnected: false,
-    rollingTempList: [],
   });
 
   useEffect(() => {
@@ -144,14 +142,6 @@ export default function Index(): React.ReactNode {
   );
 
   useEffect(() => {
-    // const newLen = monitoredData.rollingTempList.push(temperature);
-    // if (newLen > 10) monitoredData.rollingTempList.shift();
-    // monitoredData.currentTemp =
-    //   monitoredData.rollingTempList.reduce(
-    //     (total: number, current: number) => (total += current),
-    //     0
-    //   ) / monitoredData.rollingTempList.length;
-
     monitoredData.currentTemp = temperature;
 
     if (!monitoredData.isCelsius) {
