@@ -204,8 +204,8 @@ export default function Index(): React.ReactNode {
     taskTitle: "Temperature",
     taskDesc: "Waiting for reading",
     taskIcon: {
-      name: "ic_launcher",
-      type: "mipmap",
+      name: "notification_icon",
+      type: "drawable",
     },
     color: "#ff00ff",
     linkingURI: "fiery-briquette://",
