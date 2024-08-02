@@ -1,6 +1,6 @@
 # fiery_briquette
 
-<img style="float: right; padding: 10px" alt="Demo screenshot" src="demo-screenshot.png">
+<img align="right" alt="Demo screenshot" src="demo-screenshot.png">
 
 A Bluetooth grill thermometer app that pairs with an Arduino.
 
