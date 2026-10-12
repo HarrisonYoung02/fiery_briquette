@@ -1,5 +1,4 @@
-#include "WiFiS3.h"
-#include <ArduinoBLE.h>
+#include <WiFiS3.h>
 #include <Wire.h>
 #include <Adafruit_ADS1X15.h>
 
@@ -12,9 +11,6 @@ int keyIndex = 0;
 int status = WL_IDLE_STATUS;
 
 WiFiServer server(80);
-
-// BLEService temperatureService("7f47e0be-878d-45b9-9bc7-11794a65c5e9");
-// BLEStringCharacteristic temperatureCharacteristic("52fc7e02-ab71-48d9-8cb4-48e5341a83d5", BLENotify | BLERead, 7);
 
 Adafruit_ADS1115 ads;
 
@@ -53,19 +49,6 @@ void setup() {
   }
   server.begin();
   printWifiStatus();
-
-  // if (!BLE.begin()) {
-  //   Serial.println("Failed to initialize BLE");
-  //   while (1);
-  // }
-
-  // temperatureService.addCharacteristic(temperatureCharacteristic);
-  // BLE.addService(temperatureService);
-  // temperatureCharacteristic.writeValue("0");
-
-  // BLE.setLocalName("Fiery Briquette");
-  // BLE.setAdvertisedService(temperatureService);
-  // BLE.advertise();
 }
 
 float getTemperature() {
@@ -83,21 +66,34 @@ float getTemperature() {
 void webServer(float tempC) {
   float tempF = tempC * (9 / 5) + 32;
 
-  // listen for incoming clients
   WiFiClient client = server.available();
   if (client) {
     Serial.println("new client");
-    // an HTTP request ends with a blank line
-    boolean currentLineIsBlank = true;
-    while (client.connected()) {
+    const unsigned long REQUEST_TIMEOUT = 3000;
+    unsigned long lastDataTime = millis();
+    boolean requestComplete = false;
+    boolean currentLineIsBlank = true;  // an HTTP request ends with a blank line
+
+    while (client.connected() && !requestComplete && millis() - lastDataTime < REQUEST_TIMEOUT) {
       if (client.available()) {
         char c = client.read();
         Serial.write(c);
-        // if you've gotten to the end of the line (received a newline
-        // character) and the line is blank, the HTTP request has ended,
-        // so you can send a reply
+        lastDataTime = millis();
+
         if (c == '\n' && currentLineIsBlank) {
-          client.println("HTTP/1.1 200 OK");
+          requestComplete = true;
+          break;
+        }
+        if (c == '\n') {
+          currentLineIsBlank = true;
+        } else if (c != '\r') {
+          currentLineIsBlank = false;
+        }
+      }
+    }
+
+    if (requestComplete) {
+      client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
           client.println("Connection: close");
           client.println("Refresh: 60");
@@ -134,32 +130,23 @@ void webServer(float tempC) {
                 <h1 id="page-title">Fiery Briquette</h1>
                 <div class="temp-display">
                   <div class="temp-box">
-            )rawliteral");
-            client.println(tempF);
-            client.println(" &#8457; | ");
-            client.println(tempC);
-            client.println(" &#8451;");
-            client.println(R"rawliteral(
+          )rawliteral");
+          client.println(tempF);
+          client.println(" &#8457; | ");
+          client.println(tempC);
+          client.println(" &#8451;");
+          client.println(R"rawliteral(
                   </div>
                 </div>
               </body>
             </html>
           )rawliteral");
-          break;
-        }
-        if (c == '\n') {
-          // you're starting a new line
-          currentLineIsBlank = true;
-        } else if (c != '\r') {
-          // you've gotten a character on the current line
-          currentLineIsBlank = false;
-        }
-      }
+    } else {
+      Serial.println("\nRequest timed out or client disconnected");
     }
-    // give the web browser time to receive the data
-    delay(1);
 
-    // close the connection:
+    delay(1); // give the web browser time to receive the data
+
     client.stop();
     Serial.println("client disconnected");
   }
@@ -200,16 +187,4 @@ void printMacAddress(byte mac[]) {
 void loop() {
   float temperature = getTemperature();
   webServer(temperature);
-
-  // BLEDevice central = BLE.central();
-
-  // if (central) {
-  //   while (central.connected()) {
-  //     temperatureCharacteristic.writeValue(String(getTemperature()));
-  //     delay(1000); // Prevents bluetooth stack from congesting
-  //   }
-
-  //   delay(500); // Gives the bluetooth stack the chance to get things ready after disconnect
-  //   BLE.advertise();
-  // }
 }
