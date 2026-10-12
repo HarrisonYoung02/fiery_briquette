@@ -1,11 +1,9 @@
 # fiery_briquette
 
-<img align="right" alt="Demo screenshot" src="demo-screenshot.png">
+A Bluetooth grill thermometer website locally hosted on an Arduino.
 
-A Bluetooth grill thermometer app that pairs with an Arduino.
+- Developed in Arduino's custom C++.
+- Hosts a local web server on the Arduino, displaying and updating the temperature of the thermometer.
+- For posterity, contains a deprecated React Native (TypeScript) mobile app from when the thermometer used to use Bluetooth.
 
-- Developed using React Native (TypeScript) and Arduino's custom C++.
-- Connects through Bluetooth to an Arduino running the associated code.
-- Monitors temperatures received from the Arduino to keep the user constantly updated through a dynamic visual temperature dial.
-- Allows the user to specify high and low temperatures. Sends alerts when the temperature leaves this range.
-- Supports background operation, continuing to monitor temperatures and send alerts while the app is minimized.
+<img  alt="Demo screenshot" src="demo-screenshot.png">
