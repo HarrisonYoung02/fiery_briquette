@@ -1,9 +1,16 @@
-#include <ArduinoBLE.h>
+#include <WiFiS3.h>
 #include <Wire.h>
 #include <Adafruit_ADS1X15.h>
 
-BLEService temperatureService("7f47e0be-878d-45b9-9bc7-11794a65c5e9");
-BLEStringCharacteristic temperatureCharacteristic("52fc7e02-ab71-48d9-8cb4-48e5341a83d5", BLENotify | BLERead, 7);
+#include "arduino_secrets.h"
+
+char ssid[] = SECRET_SSID;
+char pass[] = SECRET_PASS;
+int keyIndex = 0;
+
+int status = WL_IDLE_STATUS;
+
+WiFiServer server(80);
 
 Adafruit_ADS1115 ads;
 
@@ -20,20 +27,28 @@ void setup() {
   // analogReadResolution(14);
   Serial.begin(9600);
   ads.begin();
-  while (!Serial);
-  
-  if (!BLE.begin()) {
-    Serial.println("Failed to initialize BLE");
-    while (1);
+  while (!Serial)
+    ;
+
+  if (WiFi.status() == WL_NO_MODULE) {
+    Serial.println("Communication with WiFi module failed!");
+    while (true)
+      ;
   }
 
-  temperatureService.addCharacteristic(temperatureCharacteristic);
-  BLE.addService(temperatureService);
-  temperatureCharacteristic.writeValue("0");
+  String fv = WiFi.firmwareVersion();
+  if (fv < WIFI_FIRMWARE_LATEST_VERSION) {
+    Serial.println("Please upgrade the firmware");
+  }
 
-  BLE.setLocalName("Fiery Briquette");
-  BLE.setAdvertisedService(temperatureService);
-  BLE.advertise();
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, pass);
+    delay(10000);
+  }
+  server.begin();
+  printWifiStatus();
 }
 
 float getTemperature() {
@@ -41,23 +56,135 @@ float getTemperature() {
   volts0 = ads.computeVolts(adc0);
   RTherm = RKnown * (MAX_VOLTS / volts0 - 1.0);
   logRTherm = log(RTherm);
-  T = (1.0 / (c1 + c2*logRTherm + c3*logRTherm*logRTherm*logRTherm));
+  T = (1.0 / (c1 + c2 * logRTherm + c3 * logRTherm * logRTherm * logRTherm));
   T = T - 273.15;
 
   if (isnan(T)) return 0;
   return T;
 }
 
-void loop() {
-  BLEDevice central = BLE.central();
+void webServer(float tempC) {
+  float tempF = tempC * (9 / 5) + 32;
 
-  if (central) {
-    while (central.connected()) {
-      temperatureCharacteristic.writeValue(String(getTemperature()));
-      delay(1000); // Prevents bluetooth stack from congesting
+  WiFiClient client = server.available();
+  if (client) {
+    Serial.println("new client");
+    const unsigned long REQUEST_TIMEOUT = 3000;
+    unsigned long lastDataTime = millis();
+    boolean requestComplete = false;
+    boolean currentLineIsBlank = true;  // an HTTP request ends with a blank line
+
+    while (client.connected() && !requestComplete && millis() - lastDataTime < REQUEST_TIMEOUT) {
+      if (client.available()) {
+        char c = client.read();
+        Serial.write(c);
+        lastDataTime = millis();
+
+        if (c == '\n' && currentLineIsBlank) {
+          requestComplete = true;
+          break;
+        }
+        if (c == '\n') {
+          currentLineIsBlank = true;
+        } else if (c != '\r') {
+          currentLineIsBlank = false;
+        }
+      }
     }
 
-    delay(500); // Gives the bluetooth stack the chance to get things ready after disconnect
-    BLE.advertise();
+    if (requestComplete) {
+      client.println("HTTP/1.1 200 OK");
+          client.println("Content-Type: text/html");
+          client.println("Connection: close");
+          client.println("Refresh: 60");
+          client.println();
+          client.println(R"rawliteral(
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <style>
+                  #page-title {
+                    text-align: center;
+                    font-size: 5em;
+                  }
+                  .temp-display {
+                    display: flex;
+                    justify-content: center;
+                    padding: 1em;
+                  }
+                  .temp-box {
+                    display: inline;
+                    text-align: center;
+                    font-size: 3em;
+                    font-weight: bold;
+                    color: white;
+                    background: indianred;
+                    border: 0.15em solid black;
+                    border-radius: 0.75em;
+                    padding: 0.5em;
+                    text-shadow: 2px 2px 2px black;
+                  }
+                </style>
+              </head>
+              <body>
+                <h1 id="page-title">Fiery Briquette</h1>
+                <div class="temp-display">
+                  <div class="temp-box">
+          )rawliteral");
+          client.println(tempF);
+          client.println(" &#8457; | ");
+          client.println(tempC);
+          client.println(" &#8451;");
+          client.println(R"rawliteral(
+                  </div>
+                </div>
+              </body>
+            </html>
+          )rawliteral");
+    } else {
+      Serial.println("\nRequest timed out or client disconnected");
+    }
+
+    delay(1); // give the web browser time to receive the data
+
+    client.stop();
+    Serial.println("client disconnected");
   }
+}
+
+void printWifiStatus() {
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
+
+  byte mac[6];
+  WiFi.macAddress(mac);
+  Serial.print("MAC address: ");
+  printMacAddress(mac);
+}
+
+void printMacAddress(byte mac[]) {
+  for (int i = 0; i < 6; i++) {
+    if (i > 0) {
+      Serial.print(":");
+    }
+    if (mac[i] < 16) {
+      Serial.print("0");
+    }
+    Serial.print(mac[i], HEX);
+  }
+  Serial.println();
+}
+
+void loop() {
+  float temperature = getTemperature();
+  webServer(temperature);
 }
