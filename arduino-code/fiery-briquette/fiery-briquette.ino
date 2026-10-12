@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <Adafruit_ADS1X15.h>
 
-#include "arduino_secrets.h" 
+#include "arduino_secrets.h"
 
 char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASS;
@@ -31,11 +31,13 @@ void setup() {
   // analogReadResolution(14);
   Serial.begin(9600);
   ads.begin();
-  while (!Serial);
+  while (!Serial)
+    ;
 
   if (WiFi.status() == WL_NO_MODULE) {
     Serial.println("Communication with WiFi module failed!");
-    while (true);
+    while (true)
+      ;
   }
 
   String fv = WiFi.firmwareVersion();
@@ -51,7 +53,7 @@ void setup() {
   }
   server.begin();
   printWifiStatus();
-  
+
   // if (!BLE.begin()) {
   //   Serial.println("Failed to initialize BLE");
   //   while (1);
@@ -71,14 +73,16 @@ float getTemperature() {
   volts0 = ads.computeVolts(adc0);
   RTherm = RKnown * (MAX_VOLTS / volts0 - 1.0);
   logRTherm = log(RTherm);
-  T = (1.0 / (c1 + c2*logRTherm + c3*logRTherm*logRTherm*logRTherm));
+  T = (1.0 / (c1 + c2 * logRTherm + c3 * logRTherm * logRTherm * logRTherm));
   T = T - 273.15;
 
   if (isnan(T)) return 0;
   return T;
 }
 
-void webServer(String temperature) {
+void webServer(float tempC) {
+  float tempF = tempC * (9 / 5) + 32;
+
   // listen for incoming clients
   WiFiClient client = server.available();
   if (client) {
@@ -93,18 +97,54 @@ void webServer(String temperature) {
         // character) and the line is blank, the HTTP request has ended,
         // so you can send a reply
         if (c == '\n' && currentLineIsBlank) {
-          // send a standard HTTP response header
           client.println("HTTP/1.1 200 OK");
           client.println("Content-Type: text/html");
-          client.println("Connection: close");  // the connection will be closed after completion of the response
-          client.println("Refresh: 5");  // refresh the page automatically every 5 sec
+          client.println("Connection: close");
+          client.println("Refresh: 60");
           client.println();
-          client.println("<!DOCTYPE HTML>");
-          client.println("<html>");
-          client.println("<p>");
-          client.println(temperature);
-          client.println("</p>");
-          client.println("</html>");
+          client.println(R"rawliteral(
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <style>
+                  #page-title {
+                    text-align: center;
+                    font-size: 5em;
+                  }
+                  .temp-display {
+                    display: flex;
+                    justify-content: center;
+                    padding: 1em;
+                  }
+                  .temp-box {
+                    display: inline;
+                    text-align: center;
+                    font-size: 3em;
+                    font-weight: bold;
+                    color: white;
+                    background: indianred;
+                    border: 0.15em solid black;
+                    border-radius: 0.75em;
+                    padding: 0.5em;
+                    text-shadow: 2px 2px 2px black;
+                  }
+                </style>
+              </head>
+              <body>
+                <h1 id="page-title">Fiery Briquette</h1>
+                <div class="temp-display">
+                  <div class="temp-box">
+            )rawliteral");
+            client.println(tempF);
+            client.println(" &#8457; | ");
+            client.println(tempC);
+            client.println(" &#8451;");
+            client.println(R"rawliteral(
+                  </div>
+                </div>
+              </body>
+            </html>
+          )rawliteral");
           break;
         }
         if (c == '\n') {
@@ -137,10 +177,28 @@ void printWifiStatus() {
   Serial.print("signal strength (RSSI):");
   Serial.print(rssi);
   Serial.println(" dBm");
+
+  byte mac[6];
+  WiFi.macAddress(mac);
+  Serial.print("MAC address: ");
+  printMacAddress(mac);
+}
+
+void printMacAddress(byte mac[]) {
+  for (int i = 0; i < 6; i++) {
+    if (i > 0) {
+      Serial.print(":");
+    }
+    if (mac[i] < 16) {
+      Serial.print("0");
+    }
+    Serial.print(mac[i], HEX);
+  }
+  Serial.println();
 }
 
 void loop() {
-  String temperature = String(getTemperature());
+  float temperature = getTemperature();
   webServer(temperature);
 
   // BLEDevice central = BLE.central();
