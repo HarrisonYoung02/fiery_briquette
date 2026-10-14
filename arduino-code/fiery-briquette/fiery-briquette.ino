@@ -64,7 +64,7 @@ float getTemperature() {
 }
 
 void webServer(float tempC) {
-  float tempF = tempC * (9 / 5) + 32;
+  float tempF = tempC * 1.8 + 32.0;
 
   WiFiClient client = server.available();
   if (client) {
