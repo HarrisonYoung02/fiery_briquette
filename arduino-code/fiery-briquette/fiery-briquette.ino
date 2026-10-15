@@ -22,6 +22,12 @@ float logRTherm, RTherm, T;
 float c1 = 0.0007429767295319737, c2 = 0.00021170687252114286, c3 = 0.00000011425980418839938;
 float MAX_VOLTS = 5.04;
 
+int logIndex = 0;
+const int LOG_END = 50;
+float volts0Arr[LOG_END];
+int16_t adc0Arr[LOG_END];
+float RThermArr[LOG_END];
+float TArr[LOG_END];
 
 void setup() {
   // analogReadResolution(14);
@@ -59,6 +65,14 @@ float getTemperature() {
   T = (1.0 / (c1 + c2 * logRTherm + c3 * logRTherm * logRTherm * logRTherm));
   T = T - 273.15;
 
+  if (logIndex < LOG_END && adc0 >= 1) {
+    adc0Arr[logIndex] = adc0;
+    volts0Arr[logIndex] = volts0;
+    RThermArr[logIndex] = RTherm;
+    TArr[logIndex] = T;
+    logIndex++;
+  }
+
   if (isnan(T)) return 0;
   return T;
 }
@@ -94,11 +108,11 @@ void webServer(float tempC) {
 
     if (requestComplete) {
       client.println("HTTP/1.1 200 OK");
-          client.println("Content-Type: text/html");
-          client.println("Connection: close");
-          client.println("Refresh: 60");
-          client.println();
-          client.println(R"rawliteral(
+      client.println("Content-Type: text/html");
+      client.println("Connection: close");
+      client.println("Refresh: 60");
+      client.println();
+      client.println(R"rawliteral(
             <!DOCTYPE html>
             <html>
               <head>
@@ -131,13 +145,28 @@ void webServer(float tempC) {
                 <div class="temp-display">
                   <div class="temp-box">
           )rawliteral");
-          client.println(tempF);
-          client.println(" &#8457; | ");
-          client.println(tempC);
-          client.println(" &#8451;");
-          client.println(R"rawliteral(
+      client.println(tempF);
+      client.println(" &#8457; | ");
+      client.println(tempC);
+      client.println(" &#8451;");
+      client.println(R"rawliteral(
                   </div>
                 </div>
+          )rawliteral");
+
+      for (int i = 0; i < logIndex; i++) {
+        client.println("<p>ADC raw: ");
+        client.println(adc0Arr[i]);
+        client.println(" ADC voltage: ");
+        client.println(volts0Arr[i], 5);
+        client.println(" Thermistor resistance: ");
+        client.println(RThermArr[i], 1);
+        client.println(" Temperature C: ");
+        client.println(TArr[i], 2);
+        client.println("</p>");
+      }
+
+      client.println(R"rawliteral(
               </body>
             </html>
           )rawliteral");
@@ -145,7 +174,7 @@ void webServer(float tempC) {
       Serial.println("\nRequest timed out or client disconnected");
     }
 
-    delay(1); // give the web browser time to receive the data
+    delay(1);  // give the web browser time to receive the data
 
     client.stop();
     Serial.println("client disconnected");
