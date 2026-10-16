@@ -30,6 +30,12 @@ int16_t adc0DataArr[DATA_SIZE];
 float RThermDataArr[DATA_SIZE];
 float TDataArr[DATA_SIZE];
 
+boolean tempInF = true;
+float lowTempF = 200;
+float lowTempC = (lowTempF - 32) / 1.8;
+float highTempF = 325;
+float highTempC = (highTempF - 32) / 1.8;
+
 void setup() {
   // analogReadResolution(14);
   Serial.begin(9600);
@@ -100,7 +106,7 @@ void webServer() {
     const unsigned long REQUEST_TIMEOUT = 3000;
     unsigned long lastDataTime = millis();
     boolean requestComplete = false;
-    boolean currentLineIsBlank = true;  // an HTTP request ends with a blank line
+    String currentLine = "";
 
     while (client.connected() && !requestComplete && millis() - lastDataTime < REQUEST_TIMEOUT) {
       if (client.available()) {
@@ -108,14 +114,25 @@ void webServer() {
         Serial.write(c);
         lastDataTime = millis();
 
-        if (c == '\n' && currentLineIsBlank) {
+        if (c == '\n' && currentLine.length() == 0) {
           requestComplete = true;
           break;
         }
         if (c == '\n') {
-          currentLineIsBlank = true;
+          currentLine = "";
         } else if (c != '\r') {
-          currentLineIsBlank = false;
+          currentLine += c;
+        }
+
+        if (currentLine.startsWith("GET /setTemp")) {
+          String tempStr = extractHeaderParam(currentLine, "temp");
+          float temp = tempStr.toFloat();
+
+          if (currentLine.startsWith("GET /setTemp/low")) {
+            setLowTemp(temp);
+          } else if (currentLine.startsWith("GET /setTemp/high")) {
+            setHighTemp(temp);
+          }
         }
       }
     }
@@ -158,7 +175,7 @@ void webServer() {
                 <h1 id="page-title">Fiery Briquette</h1>
                 <div class="temp-display">
                   <div class="temp-box">
-          )rawliteral");
+      )rawliteral");
       client.println(tempF);
       client.println(" &#8457; | ");
       client.println(tempC);
@@ -166,7 +183,77 @@ void webServer() {
       client.println(R"rawliteral(
                   </div>
                 </div>
-          )rawliteral");
+      )rawliteral");
+
+      client.println("<div>Low Limit: ");
+      if (tempInF) {
+        client.println(lowTempF);
+        client.println("&#8457;");
+      } else {
+        client.println(lowTempC);
+        client.println("&#8451;");
+      }
+      client.println("</div>");
+      client.println("<div>High Limit: ");
+      if (tempInF) {
+        client.println(highTempF);
+        client.println("&#8457;");
+      } else {
+        client.println(highTempC);
+        client.println("&#8451;");
+      }
+      client.println("</div>");
+
+      client.println(R"rawliteral(
+                <button onclick="setLow()">Set Low</button>
+                <button onclick="setHigh()">Set High</button>
+
+                <script>
+                  async function setLow() {
+      )rawliteral");
+      if (tempInF) {
+        client.println("const temp = prompt(\"Enter low temperature limit in Fahrenheit:\", ");
+        client.println(lowTempF);
+        client.println(");");
+      } else {
+        client.println("const temp = prompt(\"Enter low temperature limit in Celsius:\", ");
+        client.println(lowTempC);
+        client.println(");");
+      }
+      client.println(R"rawliteral(
+                    if (temp !== null && temp.trim() !== "") {
+                      if (isNaN(parseFloat(temp))) {
+                        alert("Please enter the limit as a number.");
+                        return;
+                      }
+                      await fetch("/setTemp/low?temp=" + encodeURIComponent(temp));
+                      location.reload();
+                    }
+                  }
+
+                  async function setHigh() {
+      )rawliteral");
+      if (tempInF) {
+        client.println("const temp = prompt(\"Enter high temperature limit in Fahrenheit:\", ");
+        client.println(highTempF);
+        client.println(");");
+      } else {
+        client.println("const temp = prompt(\"Enter high temperature limit in Celsius:\", ");
+        client.println(highTempC);
+        client.println(");");
+      }
+      client.println(R"rawliteral(
+                    if (temp !== null && temp.trim() !== "") {
+                      if (isNaN(parseFloat(temp))) {
+                        alert("Please enter the limit as a number.");
+                        return;
+                      }
+                      await fetch("/setTemp/high?temp=" + encodeURIComponent(temp));
+                      location.reload();
+                    }
+                  }
+                </script>
+      )rawliteral");
 
       // Keeping this in for future debugging
       // for (int i = 0; i < DATA_SIZE; i++) {
@@ -186,7 +273,7 @@ void webServer() {
       client.println(R"rawliteral(
               </body>
             </html>
-          )rawliteral");
+      )rawliteral");
     } else {
       Serial.println("\nRequest timed out or client disconnected");
     }
@@ -233,4 +320,66 @@ void printMacAddress(byte mac[]) {
 void loop() {
   getTemperature();
   webServer();
+}
+
+void setLowTemp(float newTemp) {
+  if (tempInF) {
+    lowTempF = newTemp;
+    lowTempC = (lowTempF - 32) / 1.8;
+  } else {
+    lowTempC = newTemp;
+    lowTempF = lowTempC * 1.8 + 32;
+  }
+}
+
+void setHighTemp(float newTemp) {
+  if (tempInF) {
+    highTempF = newTemp;
+    highTempC = (highTempF - 32) / 1.8;
+  } else {
+    highTempC = newTemp;
+    highTempF = highTempC * 1.8 + 32;
+  }
+}
+
+String extractHeaderParam(String request, String param) {
+  int start = request.indexOf('?');
+  if (start == -1) return "";
+
+  int end = request.indexOf(' ', start + 1);
+  if (end == -1) return "";
+
+  String strParams = request.substring(start + 1, end);
+
+  start = strParams.indexOf(param + "=") + param.length() + 1;
+  if (start == -1) return "";
+
+  end = strParams.indexOf("&", start);
+  if (end == -1) end = strParams.length();
+
+  return urlDecode(strParams.substring(start, end));
+}
+
+String urlDecode(String input) {
+  String result;
+  char c;
+  char hex[3] = { 0, 0, 0 };
+
+  for (int i = 0; i < input.length(); i++) {
+    c = input.charAt(i);
+
+    if (c == '+') {
+      result += ' ';
+    } else if (c == '%' && i + 2 < input.length()) {
+      hex[0] = input.charAt(i + 1);
+      hex[1] = input.charAt(i + 2);
+
+      result += (char)strtol(hex, nullptr, 16);
+      i += 2;
+    } else {
+      result += c;
+    }
+  }
+
+  return result;
 }

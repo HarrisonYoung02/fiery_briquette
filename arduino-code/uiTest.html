@@ -30,5 +30,35 @@
     <div class="temp-display">
       <div class="temp-box">0 &#8457; | 0 &#8451;</div>
     </div>
+
+    <div>Low Limit: 0&#8457;</div>
+    <div>High Limit: 100&#8457;</div>
+
+    <button onclick="setLow()">Set Low</button>
+    <button onclick="setHigh()">Set High</button>
+    <script>
+      function setLow() {
+        const temp = prompt("Enter low temperature limit:");
+
+        if (temp !== null && temp.trim() !== "") {
+          if (isNaN(parseFloat(temp))) {
+            alert("Please enter the limit as a number.");
+            return;
+          }
+          fetch("/setTemp/low?temp=" + encodeURIComponent(temp));
+        }
+      }
+      function setHigh() {
+        const temp = prompt("Enter high temperature limit:");
+
+        if (temp !== null && temp.trim() !== "") {
+          if (isNaN(parseFloat(temp))) {
+            alert("Please enter the limit as a number.");
+            return;
+          }
+          fetch("/setTemp/high?temp=" + encodeURIComponent(temp));
+        }
+      }
+    </script>
   </body>
 </html>
