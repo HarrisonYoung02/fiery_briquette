@@ -15,13 +15,20 @@ WiFiServer server(80);
 Adafruit_ADS1115 ads;
 
 int ThermistorPin = 0;
-float volts0;
-int16_t adc0;
+int supplyVoltPin = 1;
+float volts0, supplyVolts;
+int16_t adc0, adc1;
 float RKnown = 98500;
 float logRTherm, RTherm, T;
 float c1 = 0.0007429767295319737, c2 = 0.00021170687252114286, c3 = 0.00000011425980418839938;
-float MAX_VOLTS = 5.04;
 
+int dataIndex = 0;
+const int DATA_SIZE = 11;
+float supplyVoltsDataArr[DATA_SIZE];
+float volts0DataArr[DATA_SIZE];
+int16_t adc0DataArr[DATA_SIZE];
+float RThermDataArr[DATA_SIZE];
+float TDataArr[DATA_SIZE];
 
 void setup() {
   // analogReadResolution(14);
@@ -51,20 +58,41 @@ void setup() {
   printWifiStatus();
 }
 
-float getTemperature() {
+void getTemperature() {
   adc0 = ads.readADC_SingleEnded(ThermistorPin);
+  adc1 = ads.readADC_SingleEnded(supplyVoltPin);
   volts0 = ads.computeVolts(adc0);
-  RTherm = RKnown * (MAX_VOLTS / volts0 - 1.0);
+  supplyVolts = ads.computeVolts(adc1);
+  RTherm = RKnown * (supplyVolts / volts0 - 1.0);
   logRTherm = log(RTherm);
   T = (1.0 / (c1 + c2 * logRTherm + c3 * logRTherm * logRTherm * logRTherm));
   T = T - 273.15;
 
-  if (isnan(T)) return 0;
-  return T;
+  adc0DataArr[dataIndex] = adc0;
+  volts0DataArr[dataIndex] = volts0;
+  supplyVoltsDataArr[dataIndex] = supplyVolts;
+  RThermDataArr[dataIndex] = RTherm;
+  TDataArr[dataIndex] = T;
+  dataIndex++;
+  if (dataIndex >= DATA_SIZE) {
+    dataIndex = 0;
+  }
 }
 
-void webServer(float tempC) {
-  float tempF = tempC * (9 / 5) + 32;
+int sortAsc(const void *a, const void *b) {
+  int x = *(const int *)a;
+  int y = *(const int *)b;
+  return x - y;
+}
+
+void webServer() {
+  float tempCArr[DATA_SIZE];
+  memcpy(tempCArr, TDataArr, sizeof(tempCArr));
+  qsort(tempCArr, DATA_SIZE, sizeof(tempCArr[0]), sortAsc);
+
+  float tempC = tempCArr[(int)(DATA_SIZE / 2)];
+  if (isnan(tempC)) tempC = 0;
+  float tempF = tempC * 1.8 + 32.0;
 
   WiFiClient client = server.available();
   if (client) {
@@ -94,11 +122,11 @@ void webServer(float tempC) {
 
     if (requestComplete) {
       client.println("HTTP/1.1 200 OK");
-          client.println("Content-Type: text/html");
-          client.println("Connection: close");
-          client.println("Refresh: 60");
-          client.println();
-          client.println(R"rawliteral(
+      client.println("Content-Type: text/html");
+      client.println("Connection: close");
+      client.println("Refresh: 60");
+      client.println();
+      client.println(R"rawliteral(
             <!DOCTYPE html>
             <html>
               <head>
@@ -131,13 +159,31 @@ void webServer(float tempC) {
                 <div class="temp-display">
                   <div class="temp-box">
           )rawliteral");
-          client.println(tempF);
-          client.println(" &#8457; | ");
-          client.println(tempC);
-          client.println(" &#8451;");
-          client.println(R"rawliteral(
+      client.println(tempF);
+      client.println(" &#8457; | ");
+      client.println(tempC);
+      client.println(" &#8451;");
+      client.println(R"rawliteral(
                   </div>
                 </div>
+          )rawliteral");
+
+      // Keeping this in for future debugging
+      // for (int i = 0; i < DATA_SIZE; i++) {
+      //   client.println("<p>ADC raw: ");
+      //   client.println(adc0DataArr[i]);
+      //   client.println(" ADC voltage: ");
+      //   client.println(volts0DataArr[i], 5);
+      //   client.println(" Supply voltage: ");
+      //   client.println(supplyVoltsDataArr[i], 5);
+      //   client.println(" Thermistor resistance: ");
+      //   client.println(RThermDataArr[i], 1);
+      //   client.println(" Temperature C: ");
+      //   client.println(TDataArr[i], 2);
+      //   client.println("</p>");
+      // }
+
+      client.println(R"rawliteral(
               </body>
             </html>
           )rawliteral");
@@ -145,7 +191,7 @@ void webServer(float tempC) {
       Serial.println("\nRequest timed out or client disconnected");
     }
 
-    delay(1); // give the web browser time to receive the data
+    delay(1);  // give the web browser time to receive the data
 
     client.stop();
     Serial.println("client disconnected");
@@ -185,6 +231,6 @@ void printMacAddress(byte mac[]) {
 }
 
 void loop() {
-  float temperature = getTemperature();
-  webServer(temperature);
+  getTemperature();
+  webServer();
 }
