@@ -97,24 +97,30 @@ void webServer() {
   memcpy(tempCArr, TDataArr, sizeof(tempCArr));
   qsort(tempCArr, DATA_SIZE, sizeof(tempCArr[0]), sortAsc);
 
-  float tempC = tempCArr[(int)(DATA_SIZE / 2)];
-  if (isnan(tempC)) tempC = 0;
-  float tempF = tempC * 1.8 + 32.0;
+  float currentTempVal = tempCArr[(int)(DATA_SIZE / 2)];
+  if (isnan(currentTempVal)) currentTempVal = 0;
+
+  float lowTempVal = lowTempC;
+  float highTempVal = highTempC;
+  String currentTempLabel = String(currentTempVal, 2) + " &#8451;";
+  String lowTempLabel = String(lowTempVal, 2) + " &#8451;";
+  String highTempLabel = String(highTempVal, 2) + " &#8451;";
+
+  if (tempInF) {
+    currentTempVal = currentTempVal * 1.8 + 32.0;
+    lowTempVal = lowTempF;
+    highTempVal = highTempF;
+    currentTempLabel = String(currentTempVal, 2) + " &#8457;";
+    lowTempLabel = String(lowTempVal, 2) + " &#8457;";
+    highTempLabel = String(highTempVal, 2) + " &#8457;";
+  }
 
   boolean tooCold = false;
   boolean tooHot = false;
-  if (tempInF) {
-    if (tempF < lowTempF) {
-      tooCold = true;
-    } else if (tempF > highTempF) {
-      tooHot = true;
-    }
-  } else {
-    if (tempC < lowTempC) {
-      tooCold = true;
-    } else if (tempC > highTempC) {
-      tooHot = true;
-    }
+  if (currentTempVal < lowTempVal) {
+    tooCold = true;
+  } else if (currentTempVal > highTempVal) {
+    tooHot = true;
   }
 
   WiFiClient client = server.available();
@@ -162,7 +168,7 @@ void webServer() {
       client.println("Connection: close");
       client.println("Refresh: 60");
       client.println();
-      client.println(R"rawliteral(
+      client.print(R"rawliteral(
             <!DOCTYPE html>
             <html>
               <head>
@@ -253,6 +259,30 @@ void webServer() {
                     background: rgb(255, 248, 180);
                     cursor: pointer;
                   }
+                  .temp-range {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5em;
+                  }
+                  .temp-range-line {
+                    position: relative;
+                    flex: 1;
+                    height: 0.1em;
+                    background: #888;
+                  }
+                  .temp-range-marker {
+                    position: absolute;
+                    top: 50%;
+                    width: 0.2em;
+                    height: 1.25em;
+                    background: #0d9488;
+                    transform: translate(-50%, -50%);
+      )rawliteral");
+      client.print("left: ");
+      client.print(max(0, min(100, (currentTempVal - lowTempVal) / (highTempVal - lowTempVal) * 100)));
+      client.print("%;");
+      client.print(R"rawliteral(
+                  }
                 </style>
               </head>
               <body>
@@ -260,80 +290,72 @@ void webServer() {
                 <div class="temp-display">
       )rawliteral");
 
-      client.println("<div class=\"temp-box ");
+      client.print("<div class=\"temp-box ");
       if (tooCold) {
-        client.println("too-cold");
+        client.print("too-cold");
       } else if (tooHot) {
-        client.println("too-hot");
+        client.print("too-hot");
       }
-      client.println("\">");
-      if (tempInF) {
-        client.println(tempF);
-        client.println(" &#8457;");
-      } else {
-        client.println(tempC);
-        client.println(" &#8451;");
-      }
-      client.println("</div>");
+      client.print("\">");
+      client.print(currentTempLabel);
+      client.print("</div>");
 
       if (tooCold) {
-        client.println("<div class=\"temp-warning\"><span>Temperature is too cold!</span></div>");
+        client.print("<div class=\"temp-warning\"><span>Temperature is too cold!</span></div>");
       } else if (tooHot) {
-        client.println("<div class=\"temp-warning\"><span>Temperature is too hot!</span></div>");
+        client.print("<div class=\"temp-warning\"><span>Temperature is too hot!</span></div>");
       } else {
-        client.println("<div class=\"temp-warning hidden\"><span>Temperature is within limits</span></div>");
+        client.print("<div class=\"temp-warning hidden\"><span>Temperature is within limits</span></div>");
       }
 
-      client.println("<div class=\"temp-limits-box\">");
-      client.println("<div class=\"temp-limit\">");
-      client.println("<span>Low Limit: ");
-      if (tempInF) {
-        client.println(lowTempF);
-        client.println(" &#8457;");
-      } else {
-        client.println(lowTempC);
-        client.println(" &#8451;");
-      }
-      client.println("</span>");
-      client.println("<button onclick=\"setLow()\">Set Low</button>");
-      client.println("</div>");
-      client.println("<div class=\"temp-limit\">");
-      client.println("<span>High Limit: ");
-      if (tempInF) {
-        client.println(highTempF);
-        client.println(" &#8457;");
-      } else {
-        client.println(highTempC);
-        client.println(" &#8451;");
-      }
-      client.println("</span>");
-      client.println("<button onclick=\"setHigh()\">Set High</button>");
-      client.println("</div>");
-      client.println("</div>");
-      client.println("</div>");
+      client.print("<div class=\"temp-limits-box\">");
+      client.print("<div class=\"temp-limit\">");
+      client.print("<span>Low Limit: ");
+      client.print(lowTempLabel);
+      client.print("</span>");
+      client.print("<button onclick=\"setLow()\">Set Low</button>");
+      client.print("</div>");
+      client.print("<div class=\"temp-limit\">");
+      client.print("<span>High Limit: ");
+      client.print(highTempLabel);
+      client.print("</span>");
+      client.print("<button onclick=\"setHigh()\">Set High</button>");
+      client.print("</div>");
+      client.print("</div>");
+      client.print("</div>");
 
-      client.println("<button onclick=\"switchTempScale()\" class=\"switch-temp-scale\"><span>Use</span><span>");
-      if (tempInF) {
-        client.println("Celsius");
-      } else {
-        client.println("Fahrenheit");
-      }
-      client.println("</span></button>");
+      client.print("<div class=\"temp-range\">");
+      client.print("<span>");
+      client.print(lowTempLabel);
+      client.print("</span>");
+      client.print("<div class=\"temp-range-line\">");
+      client.print("<div class=\"temp-range-marker\"></div>");
+      client.print("</div>");
+      client.print("<span>");
+      client.print(highTempLabel);
+      client.print("</span>");
+      client.print("</div>");
 
-      client.println(R"rawliteral(
+      client.print("<button onclick=\"switchTempScale()\" class=\"switch-temp-scale\"><span>Use</span><span>");
+      if (tempInF) {
+        client.print("Celsius");
+      } else {
+        client.print("Fahrenheit");
+      }
+      client.print("</span></button>");
+
+      client.print(R"rawliteral(
                 <script>
                   async function setLow() {
       )rawliteral");
       if (tempInF) {
-        client.println("const temp = prompt(\"Enter low temperature limit in Fahrenheit:\", ");
-        client.println(lowTempF);
-        client.println(");");
+        client.print("const temp = prompt(\"Enter low temperature limit in Fahrenheit:\", ");
       } else {
-        client.println("const temp = prompt(\"Enter low temperature limit in Celsius:\", ");
-        client.println(lowTempC);
-        client.println(");");
+        client.print("const temp = prompt(\"Enter low temperature limit in Celsius:\", ");
       }
-      client.println(R"rawliteral(
+      client.print(lowTempVal);
+      client.print(");");
+      client.print(R"rawliteral(
                     if (temp !== null && temp.trim() !== "") {
                       if (isNaN(parseFloat(temp))) {
                         alert("Please enter the limit as a number.");
@@ -347,15 +369,13 @@ void webServer() {
                   async function setHigh() {
       )rawliteral");
       if (tempInF) {
-        client.println("const temp = prompt(\"Enter high temperature limit in Fahrenheit:\", ");
-        client.println(highTempF);
-        client.println(");");
+        client.print("const temp = prompt(\"Enter high temperature limit in Fahrenheit:\", ");
       } else {
-        client.println("const temp = prompt(\"Enter high temperature limit in Celsius:\", ");
-        client.println(highTempC);
-        client.println(");");
+        client.print("const temp = prompt(\"Enter high temperature limit in Celsius:\", ");
       }
-      client.println(R"rawliteral(
+      client.print(highTempVal);
+      client.print(");");
+      client.print(R"rawliteral(
                     if (temp !== null && temp.trim() !== "") {
                       if (isNaN(parseFloat(temp))) {
                         alert("Please enter the limit as a number.");
@@ -374,20 +394,20 @@ void webServer() {
 
       // Keeping this in for future debugging
       // for (int i = 0; i < DATA_SIZE; i++) {
-      //   client.println("<p>ADC raw: ");
-      //   client.println(adc0DataArr[i]);
-      //   client.println(" ADC voltage: ");
-      //   client.println(volts0DataArr[i], 5);
-      //   client.println(" Supply voltage: ");
-      //   client.println(supplyVoltsDataArr[i], 5);
-      //   client.println(" Thermistor resistance: ");
-      //   client.println(RThermDataArr[i], 1);
-      //   client.println(" Temperature C: ");
-      //   client.println(TDataArr[i], 2);
-      //   client.println("</p>");
+      //   client.print("<p>ADC raw: ");
+      //   client.print(adc0DataArr[i]);
+      //   client.print(" ADC voltage: ");
+      //   client.print(volts0DataArr[i], 5);
+      //   client.print(" Supply voltage: ");
+      //   client.print(supplyVoltsDataArr[i], 5);
+      //   client.print(" Thermistor resistance: ");
+      //   client.print(RThermDataArr[i], 1);
+      //   client.print(" Temperature C: ");
+      //   client.print(TDataArr[i], 2);
+      //   client.print("</p>");
       // }
 
-      client.println(R"rawliteral(
+      client.print(R"rawliteral(
               </body>
             </html>
       )rawliteral");
