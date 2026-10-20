@@ -2,12 +2,27 @@
 <html>
   <head>
     <style>
+      .hidden {
+        visibility: hidden;
+      }
       #page-title {
         text-align: center;
         font-size: 5em;
       }
+      button {
+        background: rgb(255, 248, 180);
+        cursor: pointer;
+      }
+      button:hover {
+        background: rgb(255, 252, 216);
+      }
+      button:active {
+        background: rgb(255, 236, 62);
+      }
       .temp-display {
         display: flex;
+        flex-direction: column;
+        align-items: center;
         justify-content: center;
         padding: 1em;
       }
@@ -17,11 +32,59 @@
         font-size: 3em;
         font-weight: bold;
         color: white;
-        background: indianred;
+        background: rgb(255, 205, 41);
         border: 0.15em solid black;
         border-radius: 0.75em;
         padding: 0.5em;
         text-shadow: 2px 2px 2px black;
+      }
+      .too-cold {
+        background: rgb(0, 140, 255);
+      }
+      .too-hot {
+        background: rgb(253, 46, 19);
+      }
+      .temp-warning {
+        display: flex;
+        align-items: center;
+        margin: 0.5em;
+        color: red;
+        font-weight: bold;
+        font-size: 1.5em;
+      }
+      .temp-limits-box {
+        display: flex;
+        flex-direction: row;
+      }
+      .temp-limit {
+        display: flex;
+        flex-direction: column;
+        margin: 0.5em;
+      }
+      .temp-limit span {
+        text-align: center;
+        font-size: 1.5em;
+        margin: 0.25em;
+      }
+      .temp-limit button {
+        font-size: 1.5em;
+        padding: 0.25em;
+        border-radius: 1em;
+      }
+      .switch-temp-scale {
+        position: absolute;
+        bottom: 1em;
+        left: 1em;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        text-decoration: none;
+        color: black;
+        font-size: 1.5em;
+        padding: 0.5em;
+        border-radius: 2em;
+        background: rgb(255, 248, 180);
+        cursor: pointer;
       }
     </style>
   </head>
@@ -29,15 +92,28 @@
     <h1 id="page-title">Fiery Briquette</h1>
     <div class="temp-display">
       <div class="temp-box">0 &#8457; | 0 &#8451;</div>
+      <div class="temp-warning">
+        <span>Temperature is outside limits</span>
+      </div>
+
+      <div class="temp-limits-box">
+        <div class="temp-limit">
+          <span>Low Limit: 0 &#8457;</span>
+          <button onclick="setLow()">Set Low</button>
+        </div>
+        <div class="temp-limit">
+          <span>High Limit: 100 &#8457;</span>
+          <button onclick="setHigh()">Set High</button>
+        </div>
+      </div>
     </div>
 
-    <div>Low Limit: 0&#8457;</div>
-    <div>High Limit: 100&#8457;</div>
+    <button onclick="switchTempScale()" class="switch-temp-scale">
+      <span>Use</span><span>Fahrenheit</span>
+    </button>
 
-    <button onclick="setLow()">Set Low</button>
-    <button onclick="setHigh()">Set High</button>
     <script>
-      function setLow() {
+      async function setLow() {
         const temp = prompt("Enter low temperature limit:");
 
         if (temp !== null && temp.trim() !== "") {
@@ -45,10 +121,11 @@
             alert("Please enter the limit as a number.");
             return;
           }
-          fetch("/setTemp/low?temp=" + encodeURIComponent(temp));
+          await fetch("/setTemp/low?temp=" + encodeURIComponent(temp));
+          location.reload();
         }
       }
-      function setHigh() {
+      async function setHigh() {
         const temp = prompt("Enter high temperature limit:");
 
         if (temp !== null && temp.trim() !== "") {
@@ -56,8 +133,13 @@
             alert("Please enter the limit as a number.");
             return;
           }
-          fetch("/setTemp/high?temp=" + encodeURIComponent(temp));
+          await fetch("/setTemp/high?temp=" + encodeURIComponent(temp));
+          location.reload();
         }
+      }
+      async function switchTempScale() {
+        await fetch("/switchTempScale");
+        location.reload();
       }
     </script>
   </body>

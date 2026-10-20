@@ -92,6 +92,7 @@ int sortAsc(const void *a, const void *b) {
 }
 
 void webServer() {
+  // Temp at the moment of reading is always wrong for some reason, so taking the median of the last several temps instead
   float tempCArr[DATA_SIZE];
   memcpy(tempCArr, TDataArr, sizeof(tempCArr));
   qsort(tempCArr, DATA_SIZE, sizeof(tempCArr[0]), sortAsc);
@@ -99,6 +100,22 @@ void webServer() {
   float tempC = tempCArr[(int)(DATA_SIZE / 2)];
   if (isnan(tempC)) tempC = 0;
   float tempF = tempC * 1.8 + 32.0;
+
+  boolean tooCold = false;
+  boolean tooHot = false;
+  if (tempInF) {
+    if (tempF < lowTempF) {
+      tooCold = true;
+    } else if (tempF > highTempF) {
+      tooHot = true;
+    }
+  } else {
+    if (tempC < lowTempC) {
+      tooCold = true;
+    } else if (tempC > highTempC) {
+      tooHot = true;
+    }
+  }
 
   WiFiClient client = server.available();
   if (client) {
@@ -133,6 +150,8 @@ void webServer() {
           } else if (currentLine.startsWith("GET /setTemp/high")) {
             setHighTemp(temp);
           }
+        } else if (currentLine.startsWith("GET /switchTempScale")) {
+          tempInF = !tempInF;
         }
       }
     }
@@ -148,12 +167,27 @@ void webServer() {
             <html>
               <head>
                 <style>
+                  .hidden {
+                    visibility: hidden;
+                  }
+                  button {
+                    background: rgb(255, 248, 180);
+                    cursor: pointer;
+                  }
+                  button:hover {
+                    background: rgb(255, 252, 216);
+                  }
+                  button:active {
+                    background: rgb(255, 236, 62);
+                  }
                   #page-title {
                     text-align: center;
                     font-size: 5em;
                   }
                   .temp-display {
                     display: flex;
+                    flex-direction: column;
+                    align-items: center;
                     justify-content: center;
                     padding: 1em;
                   }
@@ -163,51 +197,130 @@ void webServer() {
                     font-size: 3em;
                     font-weight: bold;
                     color: white;
-                    background: indianred;
+                    background: rgb(255, 205, 41);
                     border: 0.15em solid black;
                     border-radius: 0.75em;
                     padding: 0.5em;
                     text-shadow: 2px 2px 2px black;
+                  }
+                  .too-cold {
+                    background: rgb(0, 140, 255);
+                  }
+                  .too-hot {
+                    background: rgb(253, 46, 19);
+                  }
+                  .temp-warning {
+                    display: flex;
+                    align-items: center;
+                    margin: 0.5em;
+                    color: red;
+                    font-weight: bold;
+                    font-size: 1.5em;
+                  }
+                  .temp-limits-box {
+                    display: flex;
+                    flex-direction: row;
+                  }
+                  .temp-limit {
+                    display: flex;
+                    flex-direction: column;
+                    margin: 0.5em;
+                  }
+                  .temp-limit span {
+                    text-align: center;
+                    font-size: 1.5em;
+                    margin: 0.25em;
+                  }
+                  .temp-limit button {
+                    font-size: 1.5em;
+                    padding: 0.25em;
+                    border-radius: 1em;
+                    background: rgb(255, 248, 180);
+                    cursor: pointer;
+                  }
+                  .switch-temp-scale {
+                    position: absolute;
+                    bottom: 1em;
+                    left: 1em;
+                    display: flex;
+                    flex-direction: column;
+                    text-align: center;
+                    text-decoration: none;
+                    color: black;
+                    font-size: 1.5em;
+                    padding: 0.5em;
+                    border-radius: 2em;
+                    background: rgb(255, 248, 180);
+                    cursor: pointer;
                   }
                 </style>
               </head>
               <body>
                 <h1 id="page-title">Fiery Briquette</h1>
                 <div class="temp-display">
-                  <div class="temp-box">
-      )rawliteral");
-      client.println(tempF);
-      client.println(" &#8457; | ");
-      client.println(tempC);
-      client.println(" &#8451;");
-      client.println(R"rawliteral(
-                  </div>
-                </div>
       )rawliteral");
 
-      client.println("<div>Low Limit: ");
+      client.println("<div class=\"temp-box ");
+      if (tooCold) {
+        client.println("too-cold");
+      } else if (tooHot) {
+        client.println("too-hot");
+      }
+      client.println("\">");
+      if (tempInF) {
+        client.println(tempF);
+        client.println(" &#8457;");
+      } else {
+        client.println(tempC);
+        client.println(" &#8451;");
+      }
+      client.println("</div>");
+
+      if (tooCold) {
+        client.println("<div class=\"temp-warning\"><span>Temperature is too cold!</span></div>");
+      } else if (tooHot) {
+        client.println("<div class=\"temp-warning\"><span>Temperature is too hot!</span></div>");
+      } else {
+        client.println("<div class=\"temp-warning hidden\"><span>Temperature is within limits</span></div>");
+      }
+
+      client.println("<div class=\"temp-limits-box\">");
+      client.println("<div class=\"temp-limit\">");
+      client.println("<span>Low Limit: ");
       if (tempInF) {
         client.println(lowTempF);
-        client.println("&#8457;");
+        client.println(" &#8457;");
       } else {
         client.println(lowTempC);
-        client.println("&#8451;");
+        client.println(" &#8451;");
       }
+      client.println("</span>");
+      client.println("<button onclick=\"setLow()\">Set Low</button>");
       client.println("</div>");
-      client.println("<div>High Limit: ");
+      client.println("<div class=\"temp-limit\">");
+      client.println("<span>High Limit: ");
       if (tempInF) {
         client.println(highTempF);
-        client.println("&#8457;");
+        client.println(" &#8457;");
       } else {
         client.println(highTempC);
-        client.println("&#8451;");
+        client.println(" &#8451;");
       }
+      client.println("</span>");
+      client.println("<button onclick=\"setHigh()\">Set High</button>");
+      client.println("</div>");
+      client.println("</div>");
       client.println("</div>");
 
-      client.println(R"rawliteral(
-                <button onclick="setLow()">Set Low</button>
-                <button onclick="setHigh()">Set High</button>
+      client.println("<button onclick=\"switchTempScale()\" class=\"switch-temp-scale\"><span>Use</span><span>");
+      if (tempInF) {
+        client.println("Celsius");
+      } else {
+        client.println("Fahrenheit");
+      }
+      client.println("</span></button>");
 
+      client.println(R"rawliteral(
                 <script>
                   async function setLow() {
       )rawliteral");
@@ -251,6 +364,10 @@ void webServer() {
                       await fetch("/setTemp/high?temp=" + encodeURIComponent(temp));
                       location.reload();
                     }
+                  }
+                  async function switchTempScale() {
+                    await fetch("/switchTempScale");
+                    location.reload();
                   }
                 </script>
       )rawliteral");
