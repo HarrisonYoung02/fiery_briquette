@@ -188,7 +188,7 @@ void webServer() {
                   }
                   #page-title {
                     text-align: center;
-                    font-size: 5em;
+                    font-size: 6em;
                   }
                   .temp-display {
                     display: flex;
@@ -200,7 +200,7 @@ void webServer() {
                   .temp-box {
                     display: inline;
                     text-align: center;
-                    font-size: 3em;
+                    font-size: 4em;
                     font-weight: bold;
                     color: white;
                     background: rgb(255, 205, 41);
@@ -221,28 +221,7 @@ void webServer() {
                     margin: 0.5em;
                     color: red;
                     font-weight: bold;
-                    font-size: 1.5em;
-                  }
-                  .temp-limits-box {
-                    display: flex;
-                    flex-direction: row;
-                  }
-                  .temp-limit {
-                    display: flex;
-                    flex-direction: column;
-                    margin: 0.5em;
-                  }
-                  .temp-limit span {
-                    text-align: center;
-                    font-size: 1.5em;
-                    margin: 0.25em;
-                  }
-                  .temp-limit button {
-                    font-size: 1.5em;
-                    padding: 0.25em;
-                    border-radius: 1em;
-                    background: rgb(255, 248, 180);
-                    cursor: pointer;
+                    font-size: 2em;
                   }
                   .switch-temp-scale {
                     position: absolute;
@@ -253,28 +232,49 @@ void webServer() {
                     text-align: center;
                     text-decoration: none;
                     color: black;
-                    font-size: 1.5em;
+                    font-size: 3em;
                     padding: 0.5em;
-                    border-radius: 2em;
+                    border-radius: 1.5em;
                     background: rgb(255, 248, 180);
                     cursor: pointer;
+                  }
+                  :has(> .temp-range) {
+                    display: flex;
+                    justify-content: center;
                   }
                   .temp-range {
                     display: flex;
                     align-items: center;
-                    gap: 0.5em;
+                    gap: 1em;
+                    width: 95%;
+                  }
+                  .temp-range-label {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                  }
+                  .temp-range-label span {
+                    font-size: 3em;
+                  }
+                  .temp-range-label button {
+                    font-size: 2.5em;
+                    padding: 0.25em;
+                    border-radius: 1em;
+                    background: rgb(255, 248, 180);
+                    width: 5em;
                   }
                   .temp-range-line {
                     position: relative;
                     flex: 1;
-                    height: 0.1em;
+                    height: 0.25em;
                     background: #888;
                   }
                   .temp-range-marker {
                     position: absolute;
                     top: 50%;
-                    width: 0.2em;
-                    height: 1.25em;
+                    width: 0.5em;
+                    height: 2.5em;
                     background: #0d9488;
                     transform: translate(-50%, -50%);
       )rawliteral");
@@ -307,16 +307,21 @@ void webServer() {
       } else {
         client.print("<div class=\"temp-warning hidden\"><span>Temperature is within limits</span></div>");
       }
+      client.print("</div>");
 
-      client.print("<div class=\"temp-limits-box\">");
-      client.print("<div class=\"temp-limit\">");
-      client.print("<span>Low Limit: ");
+      client.print("<div>");
+      client.print("<div class=\"temp-range\">");
+      client.print("<div class=\"temp-range-label\">");
+      client.print("<span>");
       client.print(lowTempLabel);
       client.print("</span>");
       client.print("<button onclick=\"setLow()\">Set Low</button>");
       client.print("</div>");
-      client.print("<div class=\"temp-limit\">");
-      client.print("<span>High Limit: ");
+      client.print("<div class=\"temp-range-line\">");
+      client.print("<div class=\"temp-range-marker\"></div>");
+      client.print("</div>");
+      client.print("<div class=\"temp-range-label\">");
+      client.print("<span>");
       client.print(highTempLabel);
       client.print("</span>");
       client.print("<button onclick=\"setHigh()\">Set High</button>");
@@ -324,23 +329,11 @@ void webServer() {
       client.print("</div>");
       client.print("</div>");
 
-      client.print("<div class=\"temp-range\">");
-      client.print("<span>");
-      client.print(lowTempLabel);
-      client.print("</span>");
-      client.print("<div class=\"temp-range-line\">");
-      client.print("<div class=\"temp-range-marker\"></div>");
-      client.print("</div>");
-      client.print("<span>");
-      client.print(highTempLabel);
-      client.print("</span>");
-      client.print("</div>");
-
-      client.print("<button onclick=\"switchTempScale()\" class=\"switch-temp-scale\"><span>Use</span><span>");
+      client.print("<button onclick=\"switchTempScale()\" class=\"switch-temp-scale\"><span>Use ");
       if (tempInF) {
-        client.print("Celsius");
+        client.print("&#8451;");
       } else {
-        client.print("Fahrenheit");
+        client.print("&#8457;");
       }
       client.print("</span></button>");
 
