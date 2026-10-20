@@ -2,26 +2,111 @@
 <html>
   <head>
     <style>
+      .hidden {
+        visibility: hidden;
+      }
+      button {
+        background: rgb(255, 248, 180);
+        cursor: pointer;
+      }
+      button:hover {
+        background: rgb(255, 252, 216);
+      }
+      button:active {
+        background: rgb(255, 236, 62);
+      }
       #page-title {
         text-align: center;
-        font-size: 5em;
+        font-size: 6em;
       }
       .temp-display {
         display: flex;
+        flex-direction: column;
+        align-items: center;
         justify-content: center;
         padding: 1em;
       }
       .temp-box {
         display: inline;
         text-align: center;
-        font-size: 3em;
+        font-size: 4em;
         font-weight: bold;
         color: white;
-        background: indianred;
+        background: rgb(255, 205, 41);
         border: 0.15em solid black;
         border-radius: 0.75em;
         padding: 0.5em;
         text-shadow: 2px 2px 2px black;
+      }
+      .too-cold {
+        background: rgb(0, 140, 255);
+      }
+      .too-hot {
+        background: rgb(253, 46, 19);
+      }
+      .temp-warning {
+        display: flex;
+        align-items: center;
+        margin: 0.5em;
+        color: red;
+        font-weight: bold;
+        font-size: 2em;
+      }
+      .switch-temp-scale {
+        position: absolute;
+        bottom: 1em;
+        left: 1em;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        text-decoration: none;
+        color: black;
+        font-size: 3em;
+        padding: 0.5em;
+        border-radius: 1.5em;
+        background: rgb(255, 248, 180);
+        cursor: pointer;
+      }
+      :has(> .temp-range) {
+        display: flex;
+        justify-content: center;
+      }
+      .temp-range {
+        display: flex;
+        align-items: center;
+        gap: 1em;
+        width: 95%;
+      }
+      .temp-range-label {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .temp-range-label span {
+        font-size: 3em;
+      }
+      .temp-range-label button {
+        font-size: 2.5em;
+        padding: 0.25em;
+        border-radius: 1em;
+        background: rgb(255, 248, 180);
+        width: 5em;
+      }
+      .temp-range-line {
+        position: relative;
+        flex: 1;
+        height: 0.25em;
+        background: #888;
+      }
+      .temp-range-marker {
+        position: absolute;
+        top: 50%;
+        width: 0.5em;
+        height: 2.5em;
+        background: #0d9488;
+        transform: translate(-50%, -50%);
+        left: 50%;
       }
     </style>
   </head>
@@ -29,6 +114,60 @@
     <h1 id="page-title">Fiery Briquette</h1>
     <div class="temp-display">
       <div class="temp-box">0 &#8457; | 0 &#8451;</div>
+      <div class="temp-warning">
+        <span>Temperature is outside limits</span>
+      </div>
     </div>
+
+    <div>
+      <div class="temp-range">
+        <div class="temp-range-label">
+          <span>0 &#8457;</span>
+          <button onclick="setLow()">Set Low</button>
+        </div>
+        <div class="temp-range-line">
+          <div class="temp-range-marker"></div>
+        </div>
+        <div class="temp-range-label">
+          <span>100 &#8457;</span>
+          <button onclick="setHigh()">Set High</button>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="switchTempScale()" class="switch-temp-scale">
+      <span>Use &#8451;</span>
+    </button>
+
+    <script>
+      async function setLow() {
+        const temp = prompt("Enter low temperature limit:");
+
+        if (temp !== null && temp.trim() !== "") {
+          if (isNaN(parseFloat(temp))) {
+            alert("Please enter the limit as a number.");
+            return;
+          }
+          await fetch("/setTemp/low?temp=" + encodeURIComponent(temp));
+          location.reload();
+        }
+      }
+      async function setHigh() {
+        const temp = prompt("Enter high temperature limit:");
+
+        if (temp !== null && temp.trim() !== "") {
+          if (isNaN(parseFloat(temp))) {
+            alert("Please enter the limit as a number.");
+            return;
+          }
+          await fetch("/setTemp/high?temp=" + encodeURIComponent(temp));
+          location.reload();
+        }
+      }
+      async function switchTempScale() {
+        await fetch("/switchTempScale");
+        location.reload();
+      }
+    </script>
   </body>
 </html>
